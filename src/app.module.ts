@@ -35,6 +35,7 @@ import { ReportAdminService } from './modules/reportAdmin/reportAdmin.service';
 import { ApiDocsModule } from './modules/apidocs/apidocs.module';
 import { ApiDocsController } from './modules/apidocs/apidocs.controller';
 import { ApiDocService } from './modules/apidocs/apidocs.service';
+import { MailModule } from './modules/mail/mail.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { ApiDocService } from './modules/apidocs/apidocs.service';
     ReportModule,
     ApiDocsModule,
     RedisModule,
+    MailModule
   ],
   controllers: [
     AppController,

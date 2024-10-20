@@ -18,10 +18,12 @@ import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { CommonResponse } from 'src/common/dtos/common-response.dto';
 import { Role, StatusEnum } from 'src/types/enum';
 import { Roles } from 'src/decorator/roles.decorator';
+import { SkipThrottle } from '@nestjs/throttler';
 
+@SkipThrottle()
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Post()
   async create(@Body() createUserDto: CreateUserDto) {
@@ -135,6 +137,48 @@ export class UsersController {
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(id, updateUserDto);
+  }
+
+  @SkipThrottle({ default: false })
+  @Post('forgotPassword')
+  async forgotPassword(@Body('email') email: string) {
+    try {
+      await this.usersService.forgotPassword(email)
+      return new CommonResponse(
+        StatusEnum.SUCCESS,
+        'ForgotPassword successfull'
+      )
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: StatusEnum.ERROR,
+          message: 'Failed to forgotPassword user',
+          error: error.message,
+        },
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @SkipThrottle({ default: false })
+  @Post('resetPassword')
+  async resetPassword(@Body('token') token: string, @Body('newPassword') newPassword: string) {
+    try {
+      await this.usersService.resetPassword(token, newPassword)
+      return new CommonResponse(
+        StatusEnum.SUCCESS,
+        'ResetPassword successfull'
+      )
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: StatusEnum.ERROR,
+          message: 'Failed to resetPassword user',
+          error: error.message,
+        },
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   // @Delete(':id')

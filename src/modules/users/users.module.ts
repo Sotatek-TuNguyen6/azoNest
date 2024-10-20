@@ -5,12 +5,19 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './schemas/user.schema';
 import { AuthModule } from 'src/guards/auth.module';
 import { HistoryModule } from '../history/history.module';
+import { MailModule } from '../mail/mail.module';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 10,
+    }]),
     AuthModule,
     HistoryModule,
+    MailModule
   ],
   controllers: [UsersController],
   providers: [UsersService],

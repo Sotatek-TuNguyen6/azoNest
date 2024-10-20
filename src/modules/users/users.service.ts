@@ -2,11 +2,13 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { User } from './schemas/user.schema';
+import { User, UserDocument } from './schemas/user.schema';
 import { Model, Types } from 'mongoose';
 import * as crypto from 'crypto';
 import { comparePassword, hashPassword } from 'src/utils/hashPassword.util';
@@ -14,6 +16,7 @@ import { LoginDto } from './dto/login/login-user.dto';
 import { AuthService, LoginResponse } from 'src/guards/auth.service';
 import { HistoryService } from '../history/history.service';
 import { MethodPay } from 'src/types/enum';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class UsersService {
@@ -21,7 +24,8 @@ export class UsersService {
     @InjectModel(User.name) private userModel: Model<User>,
     private authService: AuthService,
     private historyService: HistoryService,
-  ) {}
+    private mailService: MailService
+  ) { }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     const { email, password } = createUserDto;
@@ -123,5 +127,59 @@ export class UsersService {
       throw new ForbiddenException('Invalid API key');
     }
     return user;
+  }
+
+  async forgotPassword(email: string) {
+    try {
+      const user: UserDocument = await this.userModel.findOne({ email });
+
+      if (!user) {
+        throw new NotFoundException('User with this email does not exist');
+      }
+
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      user.resetPasswordToken = resetToken;
+      user.resetPasswordExpires = new Date(Date.now() + 3600000);
+      await user.save();
+
+      const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+      await this.mailService.sendMail({
+        to: email,
+        subject: 'Reset Your Password',
+        html: `<p>Please click the following link to reset your password:</p>
+               <a href="${resetLink}">${resetLink}</a>`,
+      });
+      return true;
+    } catch (error) {
+      console.log("🚀 ~ UsersService ~ forgotPassword ~ error:", error)
+      throw new Error("Error reset password")
+    }
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    try {
+      const user = await this.userModel.findOne({
+        resetPasswordToken: token,
+        resetPasswordExpires: { $gt: new Date() },
+      });
+
+      if (!user) {
+        throw new BadRequestException('Invalid or expired token');
+      }
+
+      // Băm mật khẩu mới
+      const hashedPassword = await hashPassword(newPassword)
+
+      // Cập nhật mật khẩu mới và xóa token reset
+      user.password = hashedPassword;
+      user.resetPasswordToken = undefined; // Xóa token
+      user.resetPasswordExpires = undefined; // Xóa thời gian hết hạn token
+
+      await user.save(); // Lưu thay đổi
+
+    } catch (error) {
+      console.error('Error in resetPassword:', error.message || error);
+      throw new InternalServerErrorException('Failed to reset password');
+    }
   }
 }
