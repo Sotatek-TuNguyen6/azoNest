@@ -1,16 +1,15 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { CommonResponse } from 'src/common/dtos/common-response.dto';
-import { Action, OriginWeb, ResponeService, StatusEnum } from 'src/types/enum';
+import { Action, OriginWeb, ResponeService } from 'src/types/enum';
 import { Products } from './schemas/products.schema';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { URLSearchParams } from 'url';
 import { CommonService } from 'src/common/service/common.service';
 import { CustomLoggerService } from 'src/logger/custom-logger.service';
-// import * as queryString from 'query-string';
+import { UpdateProductDto } from './dto/update/update-product.dto';
 
 interface Data {
   key: string;
@@ -45,8 +44,8 @@ export class ProductService {
         break;
       default:
         this.logger.warn('Unsupported origin');
-        throw new Error('Unsupported origin'); 
-      }
+        throw new Error('Unsupported origin');
+    }
 
     const urlEncodedData = new URLSearchParams();
     urlEncodedData.append('key', data.key);
@@ -83,10 +82,10 @@ export class ProductService {
         await createdProduct.save();
         createdProducts.push(createdProduct);
       }
-      this.logger.log("Update success!!")
+      this.logger.log('Update success!!');
       return createdProducts; // Trả về danh sách sản phẩm đã tạo
     } else {
-      throw new Error('Unexpected response format'); 
+      throw new Error('Unexpected response format');
     }
   }
 
@@ -96,28 +95,60 @@ export class ProductService {
 
   async getById(id: string): Promise<Products> {
     if (!id) {
-      throw new Error('Id is empty'); 
+      throw new Error('Id is empty');
     }
 
     const product = await this.productsModel.findById(id).exec();
 
     if (!product) {
-       throw new Error('Product not found'); 
+      throw new Error('Product not found');
     }
     return product; // Trả về sản phẩm theo id
   }
 
   async delete(id: string): Promise<Products> {
     if (!id) {
-      throw new Error('Id is empty'); 
+      throw new Error('Id is empty');
     }
 
     const product = await this.productsModel.findByIdAndDelete(id).exec();
 
     if (!product) {
-       throw new Error('Product not found'); 
+      throw new Error('Product not found');
     }
 
     return product; // Trả về sản phẩm đã bị xóa
+  }
+
+  /**
+   * Update a specific product by its ID.
+   *
+   * @param {string} id - The ID of the product to update.
+   * @param {UpdateProductDto} updateProductDto - The data transfer object containing the product update details.
+   * @returns {Promise<Product>} - A promise that resolves to the updated Product document.
+   *
+   * @example
+   * const updatedProduct = await this.productService.update('123456', updateProductDto);
+   * console.log(updatedProduct);
+   */
+  async update(id: string, updateProductDto: UpdateProductDto): Promise<Products> {
+    // Tìm sản phẩm theo ID
+    const existingProduct = await this.productsModel.findById(id).exec();
+
+    // Nếu không tìm thấy sản phẩm, ném ra lỗi NotFoundException
+    if (!existingProduct) {
+      throw new NotFoundException(`Product with ID ${id} not found`);
+    }
+
+    // Cập nhật sản phẩm với dữ liệu từ updateProductDto
+    Object.assign(existingProduct, updateProductDto);
+
+    // Lưu sản phẩm đã cập nhật
+    return await existingProduct.save();
+  }
+
+  async getByValue(value: string){
+    if(!value) throw new Error('Valua is require')
+    return this.productsModel.findOne({value})
   }
 }

@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
+import { Products } from 'src/modules/products/schemas/products.schema';
 import { User } from 'src/modules/users/schemas/user.schema';
 export type OrdersDocument = HydratedDocument<Orders>;
 
@@ -11,8 +12,8 @@ export class OrderItem {
   @Prop({ type: String, required: true })
   link: string;
 
-  @Prop({ type: String, required: true })
-  service: string;
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Product', required: true  })
+  service: Products;
 
   @Prop({ type: String, required: true })
   order: string;

@@ -3,10 +3,14 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Types } from 'mongoose';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import { UserPayLoad } from './auth.service';
+import { Role } from 'src/types/enum';
 
 export interface UserValidate {
   username: string;
   userId: Types.ObjectId;
+  role: Role;
+  tokenVersion: number;
 }
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -18,7 +22,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: any): Promise<UserValidate> {
-    return { userId: payload.sub, username: payload.username };
+  async validate(payload: UserPayLoad): Promise<UserValidate> {
+    return {
+      userId: payload.sub,
+      username: payload.username,
+      role: payload.role,
+      tokenVersion: payload.tokenVersion,
+    };
   }
 }

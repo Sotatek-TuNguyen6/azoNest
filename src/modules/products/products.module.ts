@@ -13,7 +13,7 @@ import { LoggerModule } from 'src/logger/logger.module';
       { name: Products.name, schema: ProductsSchema },
     ]),
     CommonModule,
-    LoggerModule
+    LoggerModule,
   ],
   controllers: [ProductController],
   providers: [ProductService, CustomLoggerService],

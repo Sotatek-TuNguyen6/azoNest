@@ -1,10 +1,19 @@
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Orders } from './schemas/orders.schema';
-import { Model, Types } from 'mongoose';
+import { ClientSession, Model, Types } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import {
   Action,
+  MethodPay,
   OriginWeb,
   ResponseInforService,
   Status,
@@ -14,8 +23,10 @@ import axios from 'axios';
 import { CommonService } from 'src/common/service/common.service';
 import { CommonResponse } from 'src/common/dtos/common-response.dto';
 import { OrderItem } from './interface/order.interface';
-import { User } from '../users/interface/user.interface';
 import { UsersService } from '../users/users.service';
+import { ProductService } from '../products/products.service';
+import { User } from '../users/schemas/user.schema';
+import { HistoryService } from '../history/history.service';
 
 interface PayloadOrder {
   action: Action;
@@ -26,9 +37,13 @@ interface PayloadOrder {
 export class OrderService {
   constructor(
     @InjectModel(Orders.name) private ordersModel: Model<Orders>,
+    @InjectModel(User.name) private userModel: Model<User>,
     private readonly configService: ConfigService,
     private readonly commonService: CommonService,
-    private readonly userService: UsersService
+    private readonly userService: UsersService,
+    private readonly productService: ProductService,
+    private readonly historyService: HistoryService,
+
   ) {}
   private readonly logger = new Logger(OrderService.name);
 
@@ -104,7 +119,9 @@ export class OrderService {
       } else {
         this.logger.log('Không có bản ghi nào!');
       }
-    } catch (error) {}
+    } catch (error) {
+      this.logger.error(error.message);
+    }
   }
 
   async retryOrder(
@@ -220,15 +237,15 @@ export class OrderService {
     }
   }
 
-  async deleteOrder(id: string){
+  async deleteOrder(id: string) {
     try {
       if (!id) {
         throw new HttpException('Id is empty', HttpStatus.BAD_REQUEST);
       }
 
-      await this.ordersModel.findByIdAndDelete(id)
+      await this.ordersModel.findByIdAndDelete(id);
 
-      return new CommonResponse(StatusEnum.SUCCESS, "Delete Order success!")
+      return new CommonResponse(StatusEnum.SUCCESS, 'Delete Order success!');
     } catch (error) {
       throw new HttpException(
         {
@@ -241,14 +258,84 @@ export class OrderService {
     }
   }
 
-  async createOrder (orderItem: OrderItem[], userId: Types.ObjectId){
+   /**
+   * Create an order and deduct the total amount from the user's balance using a transaction
+   * @param {OrderItem[]} orderItem - List of items in the order
+   * @param {Types.ObjectId} userId - The ID of the user placing the order
+   * @returns {Promise<Orders>} - The created order
+   */
+   async createOrder(
+    orderItem: OrderItem[],
+    userId: Types.ObjectId,
+  ): Promise<Orders> {
+    const session: ClientSession = await this.ordersModel.db.startSession(); // Bắt đầu session transaction
+    session.startTransaction();
+
     try {
-      const user = await this.userService.findOne(userId)
-      console.log("🚀 ~ OrderService ~ createOrder ~ user:", user)
-      
+      // Tìm người dùng theo ID trong phiên giao dịch (session)
+      const user = await this.userModel.findById(userId).session(session);
+      if (!user) throw new NotFoundException('User ID does not exist');
+
+      // Kiểm tra nếu danh sách sản phẩm trống
+      if (!orderItem || orderItem.length === 0) {
+        throw new NotFoundException('Order items cannot be empty');
+      }
+
+      const product_value = orderItem[0].service;
+      const product = await this.productService.getByValue(product_value);
+
+      // Tính tổng số tiền đơn hàng
+      const totalAmount = this.calculateTotal(orderItem, product.rate);
+
+      // Kiểm tra số dư người dùng
+      if (user.money < totalAmount) {
+        throw new BadRequestException('Insufficient balance');
+      }
+
+      // Trừ số tiền từ tài khoản người dùng
+      user.money -= totalAmount;
+
+      // Cập nhật số dư người dùng trong phiên giao dịch
+      await user.save({ session });
+
+      // Lưu lịch sử giao dịch với lý do trừ tiền cho đơn hàng
+      await this.historyService.createHistory(
+        userId.toString(),
+        MethodPay.HANDLE,
+        totalAmount,
+        `Order placed by user ${userId}`,
+      );
+
+      // Tạo đơn hàng mới
+      const newOrder = new this.ordersModel({
+        userId,
+        items: orderItem,
+        totalAmount,
+        origin: product.origin,
+      });
+
+      // Lưu đơn hàng vào cơ sở dữ liệu trong phiên giao dịch
+      await newOrder.save({ session });
+
+      // Commit transaction nếu tất cả thành công
+      await session.commitTransaction();
+      session.endSession();
+      return newOrder;
     } catch (error) {
-      
+      // Abort transaction nếu có lỗi
+      await session.abortTransaction();
+      session.endSession();
+      throw new InternalServerErrorException('Failed to create order');
     }
   }
 
+  /**
+   * Calculate the total amount for the order
+   * @param {OrderItem[]} orderItems - The list of items in the order
+   * @param {number} rate - The rate of the product
+   * @returns {number} - The total amount
+   */
+  private calculateTotal(orderItems: OrderItem[], rate: number): number {
+    return orderItems.reduce((total, item) => total + item.quantity * rate, 0);
+  }
 }

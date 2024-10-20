@@ -4,11 +4,13 @@ import { UsersController } from './users.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './schemas/user.schema';
 import { AuthModule } from 'src/guards/auth.module';
+import { HistoryModule } from '../history/history.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     AuthModule,
+    HistoryModule,
   ],
   controllers: [UsersController],
   providers: [UsersService],

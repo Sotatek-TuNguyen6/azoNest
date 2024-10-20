@@ -22,7 +22,6 @@ export class CustomLoggerService implements LoggerService {
     ],
   });
 
- 
   log(message: string, meta?: any) {
     const logMessage = meta
       ? `${message} - IP: ${meta.ip} - Status: ${meta.statusCode} - Body: ${JSON.stringify(

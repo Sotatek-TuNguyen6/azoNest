@@ -8,21 +8,29 @@ import {
   UseGuards,
   HttpException,
   HttpStatus,
+  Patch,
+  NotFoundException,
 } from '@nestjs/common';
 import { ProductService } from './products.service';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { ImportProductDto } from './dto/import/import-product.dto';
 import { CommonResponse } from 'src/common/dtos/common-response.dto';
-import { StatusEnum } from 'src/types/enum';
+import { Role, StatusEnum } from 'src/types/enum';
+import { UpdateProductDto } from './dto/update/update-product.dto';
+import { Roles } from 'src/decorator/roles.decorator';
 
 @Controller('products')
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.admin)
   @Post('/import')
   async importProduct(@Body() importProductDto: ImportProductDto) {
     try {
-      const importedProducts = await this.productService.importData(importProductDto.origin);
+      const importedProducts = await this.productService.importData(
+        importProductDto.origin,
+      );
       return new CommonResponse(
         StatusEnum.SUCCESS,
         'Products imported successfully',
@@ -44,7 +52,11 @@ export class ProductController {
   async getProduct() {
     try {
       const products = await this.productService.getService();
-      return new CommonResponse(StatusEnum.SUCCESS, 'Fetched products successfully', products);
+      return new CommonResponse(
+        StatusEnum.SUCCESS,
+        'Fetched products successfully',
+        products,
+      );
     } catch (error) {
       throw new HttpException(
         {
@@ -57,12 +69,15 @@ export class ProductController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get('/:id')
   async getProductById(@Param('id') id: string) {
     try {
       const product = await this.productService.getById(id);
-      return new CommonResponse(StatusEnum.SUCCESS, 'Fetched product successfully', product);
+      return new CommonResponse(
+        StatusEnum.SUCCESS,
+        'Fetched product successfully',
+        product,
+      );
     } catch (error) {
       if (error.message === 'Product not found') {
         throw new HttpException('Product not found', HttpStatus.NOT_FOUND);
@@ -79,11 +94,16 @@ export class ProductController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Roles(Role.admin)
   @Delete('/:id')
   async remove(@Param('id') id: string) {
     try {
       const deletedProduct = await this.productService.delete(id);
-      return new CommonResponse(StatusEnum.SUCCESS, 'Product deleted successfully', deletedProduct);
+      return new CommonResponse(
+        StatusEnum.SUCCESS,
+        'Product deleted successfully',
+        deletedProduct,
+      );
     } catch (error) {
       if (error.message === 'Product not found') {
         throw new HttpException('Product not found', HttpStatus.NOT_FOUND);
@@ -95,6 +115,40 @@ export class ProductController {
           error: error.message,
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.admin)
+  @Patch('/:id')
+  async update(
+    @Param('id') id: string,
+    @Body() updateProductDto: UpdateProductDto,
+  ) {
+    try {
+      const product = await this.productService.update(id, updateProductDto);
+
+      return new CommonResponse(StatusEnum.SUCCESS, 'Update product success!', product);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        // Nếu không tìm thấy sản phẩm, trả về lỗi 404
+        throw new HttpException(
+          {
+            status: StatusEnum.ERROR,
+            message: 'Failed to get user',
+            error: error.message,
+          },
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      throw new HttpException(
+        {
+          status: StatusEnum.ERROR,
+          message: 'Failed to get user',
+          error: error.message,
+        },
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }

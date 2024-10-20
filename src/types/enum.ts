@@ -40,8 +40,18 @@ export enum Status {
   'Pending' = 'Chờ duyệt',
   'Processing' = 'Đang kiểm tra',
   'In Progress' = 'Đang tiến hành',
-  'In progress' = 'Đang tiến hành',
   'Completed' = 'Hoàn thành',
   'Partial' = 'Đã chạy một phần',
   'Canceled' = 'Bị hủy',
+}
+
+export enum Role {
+  'admin' = 'admin',
+  'user' = 'user',
+  'other' = 'other',
+}
+
+export enum MethodPay {
+  HANDLE = 'handle',
+  BANK = 'bank',
 }

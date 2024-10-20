@@ -5,14 +5,16 @@ import { OrderService } from './orders.service';
 import { OrderController } from './orders.controlller';
 import { CommonModule } from 'src/common/service/common.module';
 import { UsersModule } from '../users/users.module';
+import { ProductsModule } from '../products/products.module';
+import { HistoryModule } from '../history/history.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: Orders.name, schema: OrdersSchema },
-    ]),
+    MongooseModule.forFeature([{ name: Orders.name, schema: OrdersSchema }]),
     CommonModule,
-    UsersModule
+    UsersModule,
+    ProductsModule,
+    HistoryModule
   ],
   controllers: [OrderController],
   providers: [OrderService],

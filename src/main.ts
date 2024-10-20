@@ -2,8 +2,6 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
-import { CustomLoggerService } from './logger/custom-logger.service';
-import { LoggingInterceptor } from './logger/logging.interceptor';
 require('dotenv').config();
 
 async function bootstrap() {

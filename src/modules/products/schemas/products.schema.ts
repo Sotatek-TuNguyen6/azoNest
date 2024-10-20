@@ -33,6 +33,9 @@ export class Products {
 
   @Prop({ default: false })
   refill: boolean;
+
+  @Prop()
+  description: string;
 }
 
 export const ProductsSchema = SchemaFactory.createForClass(Products);

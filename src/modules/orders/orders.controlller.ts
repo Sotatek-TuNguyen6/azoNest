@@ -15,7 +15,7 @@ export class OrderController {
     @Body('orderService') orderItemDto: OrderItemDto[],
     @Req() req: CustomRequest,
   ) {
-    const user:UserValidate = req.user;
+    const user: UserValidate = req.user;
 
     this.orderService.createOrder(orderItemDto, user.userId);
   }

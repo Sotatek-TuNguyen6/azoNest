@@ -5,7 +5,6 @@ import {
   Body,
   Patch,
   Param,
-  Delete,
   HttpCode,
   HttpStatus,
   UseGuards,
@@ -17,7 +16,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { LoginDto } from './dto/login/login-user.dto';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { CommonResponse } from 'src/common/dtos/common-response.dto';
-import { StatusEnum } from 'src/types/enum';
+import { Role, StatusEnum } from 'src/types/enum';
+import { Roles } from 'src/decorator/roles.decorator';
 
 @Controller('users')
 export class UsersController {
@@ -71,6 +71,7 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Roles(Role.admin)
   @Get()
   async findAll() {
     try {
@@ -92,15 +93,49 @@ export class UsersController {
     }
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.admin)
+  @Post('/addMoney')
+  @HttpCode(HttpStatus.OK)
+  async addMoneyByAdmin(
+    @Body('id') id: string,
+    @Body('amount') amount: number,
+  ) {
+    try {
+      const user = await this.usersService.addMoneyByAdmin(id, amount);
+
+      return new CommonResponse(
+        StatusEnum.SUCCESS,
+        'Add money to user success',
+        user,
+      );
+    } catch (error) {
+      if (error.message === 'Email not exists') {
+        throw new HttpException('Email not exists', HttpStatus.BAD_GATEWAY);
+      }
+
+      throw new HttpException(
+        {
+          status: StatusEnum.ERROR,
+          message: 'Failed add money to user',
+          error: error.message,
+        },
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   // @Get(':id')
   // findOne(@Param('id') id: string) {
   //   return this.usersService.findOne(+id);
   // }
 
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-  //   return this.usersService.update(+id, updateUserDto);
-  // }
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.admin)
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    return this.usersService.update(id, updateUserDto);
+  }
 
   // @Delete(':id')
   // remove(@Param('id') id: string) {

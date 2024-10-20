@@ -19,6 +19,19 @@ import { CustomLoggerService } from './logger/custom-logger.service';
 import { LoggerModule } from './logger/logger.module';
 import { TasksModule } from './tasks/task.module';
 import { TasksService } from './tasks/task.service';
+import { PlatformsModule } from './modules/platforms/platforms.module';
+import { PlatformController } from './modules/platforms/platforms.controller';
+import { PlatformsService } from './modules/platforms/platforms.service';
+import { RedisModule } from './redis/redis.module';
+import { HistoryModule } from './modules/history/history.module';
+import { HistoryService } from './modules/history/history.service';
+import { HistoryController } from './modules/history/history.controller';
+import { ReportAdminModule } from './modules/reportAdmin/reportAdmin.module';
+import { ReportModule } from './modules/report/report.module';
+import { ReportAdminController } from './modules/reportAdmin/reportAdmin.controller';
+import { ReportController } from './modules/report/report.controller';
+import { ReportService } from './modules/report/report.service';
+import { ReportAdminService } from './modules/reportAdmin/reportAdmin.service';
 
 @Module({
   imports: [
@@ -29,7 +42,7 @@ import { TasksService } from './tasks/task.service';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        uri: configService.get<string>('MONGODB_URI'), 
+        uri: configService.get<string>('MONGODB_URI'),
       }),
     }),
     ScheduleModule.forRoot(),
@@ -40,9 +53,34 @@ import { TasksService } from './tasks/task.service';
     CommonModule,
     LoggerModule,
     OrdersModule,
-    TasksModule
+    PlatformsModule,
+    HistoryModule,
+    TasksModule,
+    ReportAdminModule,
+    ReportModule,
+    RedisModule,
   ],
-  controllers: [AppController, UsersController, ProductController, OrderController],
-  providers: [AppService, UsersService, ProductService, OrderService, CustomLoggerService, TasksService],
+  controllers: [
+    AppController,
+    UsersController,
+    ProductController,
+    OrderController,
+    PlatformController,
+    HistoryController,
+    ReportAdminController,
+    ReportController
+  ],
+  providers: [
+    AppService,
+    UsersService,
+    ProductService,
+    OrderService,
+    CustomLoggerService,
+    TasksService,
+    PlatformsService,
+    HistoryService,
+    ReportService,
+    ReportAdminService
+  ],
 })
 export class AppModule {}
