@@ -23,7 +23,7 @@ import { Types } from 'mongoose';
 export class PlatformController {
   constructor(private readonly platformService: PlatformsService) {}
 
-  @UseGuards(JwtAuthGuard)
+  // @UseGuards(JwtAuthGuard)
   @Post()
   async create(@Body() createPlatFormDto: CreateFlatFormDto) {
     try {

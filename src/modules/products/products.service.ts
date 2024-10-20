@@ -97,7 +97,7 @@ export class ProductService {
   }
 
   async getService(): Promise<Products[]> {
-    return this.productsModel.find().exec(); // Trả về danh sách sản phẩm
+    return this.productsModel.find().sort({ createdAt: -1 }).exec(); 
   }
 
   async getById(id: string): Promise<Products> {
