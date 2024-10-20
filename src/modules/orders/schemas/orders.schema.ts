@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
-import { Products } from 'src/modules/products/schemas/products.schema';
+import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
 import { User } from 'src/modules/users/schemas/user.schema';
 export type OrdersDocument = HydratedDocument<Orders>;
 
@@ -12,8 +11,8 @@ export class OrderItem {
   @Prop({ type: String, required: true })
   link: string;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Product', required: true  })
-  service: Products;
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Product', required: true })
+  service: Types.ObjectId;
 
   @Prop({ type: String, required: true })
   order: string;
@@ -34,7 +33,7 @@ export class Orders {
   totalPrice: number;
 
   @Prop({ type: [{ type: MongooseSchema.Types.Mixed }], required: true })
-  orderItems: OrderItem[];
+  orderItems: OrderItem;
 
   @Prop()
   origin: string;

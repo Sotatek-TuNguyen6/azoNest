@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -89,7 +93,10 @@ export class UsersService {
     return this.authService.login(user); // Trả về token đăng nhập
   }
 
-  async addMoneyByAdmin(usedId: string | Types.ObjectId, amount: number): Promise<User> {
+  async addMoneyByAdmin(
+    usedId: string | Types.ObjectId,
+    amount: number,
+  ): Promise<User> {
     const user = await this.userModel.findById(usedId);
 
     if (!user) throw new Error('Userid not exists');
@@ -104,6 +111,17 @@ export class UsersService {
       amount,
       `Add money to ${usedId}`,
     );
+    return user;
+  }
+
+  async checkApiKey(apiKey: string): Promise<any> {
+    if (!apiKey) return new BadRequestException('Apikey not empty');
+
+    const user = await this.userModel.findOne({ apiKey });
+
+    if (!user) {
+      throw new ForbiddenException('Invalid API key');
+    }
     return user;
   }
 }

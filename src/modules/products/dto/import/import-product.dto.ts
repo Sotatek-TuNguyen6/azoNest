@@ -1,7 +1,11 @@
-import { IsEnum } from 'class-validator';
+import { IsEnum, IsString } from 'class-validator';
+import { Types } from 'mongoose';
 import { OriginWeb } from 'src/types/enum';
 
 export class ImportProductDto {
   @IsEnum(OriginWeb, { message: 'Invalid origin' })
   origin: OriginWeb;
+
+  @IsString()
+  platform: Types.ObjectId;
 }

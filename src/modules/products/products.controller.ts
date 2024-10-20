@@ -18,18 +18,26 @@ import { CommonResponse } from 'src/common/dtos/common-response.dto';
 import { Role, StatusEnum } from 'src/types/enum';
 import { UpdateProductDto } from './dto/update/update-product.dto';
 import { Roles } from 'src/decorator/roles.decorator';
+import { PlatformsService } from '../platforms/platforms.service';
 
 @Controller('products')
 export class ProductController {
-  constructor(private readonly productService: ProductService) {}
+  constructor(
+    private readonly productService: ProductService,
+    private readonly platFormService: PlatformsService,
+  ) {}
 
   @UseGuards(JwtAuthGuard)
   @Roles(Role.admin)
   @Post('/import')
   async importProduct(@Body() importProductDto: ImportProductDto) {
     try {
+      const platform = await this.platFormService.getById(
+        importProductDto.platform,
+      );
       const importedProducts = await this.productService.importData(
         importProductDto.origin,
+        platform._id,
       );
       return new CommonResponse(
         StatusEnum.SUCCESS,
@@ -129,7 +137,11 @@ export class ProductController {
     try {
       const product = await this.productService.update(id, updateProductDto);
 
-      return new CommonResponse(StatusEnum.SUCCESS, 'Update product success!', product);
+      return new CommonResponse(
+        StatusEnum.SUCCESS,
+        'Update product success!',
+        product,
+      );
     } catch (error) {
       if (error instanceof NotFoundException) {
         // Nếu không tìm thấy sản phẩm, trả về lỗi 404

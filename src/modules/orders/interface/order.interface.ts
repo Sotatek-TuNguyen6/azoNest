@@ -4,8 +4,8 @@ export interface OrderItem {
   quantity: number;
   link: string;
   service: string;
-  order: string;
-  name: string;
+  order?: string;
+  name?: string;
   keyword?: string;
 }
 

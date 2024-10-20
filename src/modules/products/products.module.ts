@@ -6,6 +6,7 @@ import { Products, ProductsSchema } from './schemas/products.schema';
 import { CommonModule } from 'src/common/service/common.module';
 import { CustomLoggerService } from 'src/logger/custom-logger.service';
 import { LoggerModule } from 'src/logger/logger.module';
+import { PlatformsModule } from '../platforms/platforms.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { LoggerModule } from 'src/logger/logger.module';
     ]),
     CommonModule,
     LoggerModule,
+    PlatformsModule,
   ],
   controllers: [ProductController],
   providers: [ProductService, CustomLoggerService],

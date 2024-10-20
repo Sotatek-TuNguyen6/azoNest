@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Action, OriginWeb, ResponeService } from 'src/types/enum';
 import { Products } from './schemas/products.schema';
 import { ConfigService } from '@nestjs/config';
@@ -25,7 +25,10 @@ export class ProductService {
     private readonly logger: CustomLoggerService,
   ) {}
 
-  async importData(origin: OriginWeb): Promise<Products[]> {
+  async importData(
+    origin: OriginWeb,
+    platform: Types.ObjectId,
+  ): Promise<Products[]> {
     this.logger.log(`Starting import for origin: ${origin}`);
 
     let data: Data;
@@ -67,21 +70,25 @@ export class ProductService {
             )
           : response.data;
 
-      const createdProducts = [];
-      for (const item of filteredData) {
-        const createdProduct = new this.productsModel({
-          value: item.service,
-          label: item.name,
-          origin,
-          min: item.min,
-          max: item.max,
-          rate: item.rate,
-          refill: item.refill,
-        });
+      const createdProducts = await Promise.all(
+        filteredData.map(async (item) => {
+          const createdProduct = new this.productsModel({
+            value: item.service,
+            label: item.name,
+            origin,
+            min: item.min,
+            max: item.max,
+            rate: item.rate,
+            refill: item.refill,
+            platform,
+          });
 
-        await createdProduct.save();
-        createdProducts.push(createdProduct);
-      }
+          // Lưu sản phẩm vào cơ sở dữ liệu
+          await createdProduct.save();
+
+          return createdProduct; // Trả về sản phẩm đã tạo
+        }),
+      );
       this.logger.log('Update success!!');
       return createdProducts; // Trả về danh sách sản phẩm đã tạo
     } else {
@@ -131,7 +138,10 @@ export class ProductService {
    * const updatedProduct = await this.productService.update('123456', updateProductDto);
    * console.log(updatedProduct);
    */
-  async update(id: string, updateProductDto: UpdateProductDto): Promise<Products> {
+  async update(
+    id: string,
+    updateProductDto: UpdateProductDto,
+  ): Promise<Products> {
     // Tìm sản phẩm theo ID
     const existingProduct = await this.productsModel.findById(id).exec();
 
@@ -147,8 +157,12 @@ export class ProductService {
     return await existingProduct.save();
   }
 
-  async getByValue(value: string){
-    if(!value) throw new Error('Valua is require')
-    return this.productsModel.findOne({value})
+  async getByValue(value: string) {
+    if (!value) throw new Error('Valua is require');
+    return this.productsModel.findOne({ value });
+  }
+
+  async getByOrigin(origin: OriginWeb) {
+    return this.productsModel.find({ origin });
   }
 }

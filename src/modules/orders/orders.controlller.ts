@@ -12,7 +12,7 @@ export class OrderController {
   @UseGuards(JwtAuthGuard)
   @Post()
   async createOrder(
-    @Body('orderService') orderItemDto: OrderItemDto[],
+    @Body('orderService') orderItemDto: OrderItemDto,
     @Req() req: CustomRequest,
   ) {
     const user: UserValidate = req.user;

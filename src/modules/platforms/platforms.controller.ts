@@ -17,6 +17,7 @@ import { CreateFlatFormDto } from './dto/create/create-platform.dto';
 import { CommonResponse } from 'src/common/dtos/common-response.dto';
 import { StatusEnum } from 'src/types/enum';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { Types } from 'mongoose';
 
 @Controller('platforms')
 export class PlatformController {
@@ -78,7 +79,7 @@ export class PlatformController {
   }
 
   @Get('/:id')
-  async getById(@Param('id') id: string) {
+  async getById(@Param('id') id: Types.ObjectId) {
     try {
       const platform = await this.platformService.getById(id);
 

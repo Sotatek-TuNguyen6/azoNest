@@ -1,4 +1,10 @@
-import { Controller, Get, HttpException, HttpStatus, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  UseGuards,
+} from '@nestjs/common';
 import { ReportAdminService } from './reportAdmin.service';
 import { CommonResponse } from 'src/common/dtos/common-response.dto';
 import { Role, StatusEnum } from 'src/types/enum';

@@ -7,6 +7,7 @@ import { CommonModule } from 'src/common/service/common.module';
 import { UsersModule } from '../users/users.module';
 import { ProductsModule } from '../products/products.module';
 import { HistoryModule } from '../history/history.module';
+import { PlatformsModule } from '../platforms/platforms.module';
 
 @Module({
   imports: [
@@ -14,7 +15,8 @@ import { HistoryModule } from '../history/history.module';
     CommonModule,
     UsersModule,
     ProductsModule,
-    HistoryModule
+    HistoryModule,
+    PlatformsModule,
   ],
   controllers: [OrderController],
   providers: [OrderService],

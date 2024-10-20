@@ -32,6 +32,9 @@ import { ReportAdminController } from './modules/reportAdmin/reportAdmin.control
 import { ReportController } from './modules/report/report.controller';
 import { ReportService } from './modules/report/report.service';
 import { ReportAdminService } from './modules/reportAdmin/reportAdmin.service';
+import { ApiDocsModule } from './modules/apidocs/apidocs.module';
+import { ApiDocsController } from './modules/apidocs/apidocs.controller';
+import { ApiDocService } from './modules/apidocs/apidocs.service';
 
 @Module({
   imports: [
@@ -58,6 +61,7 @@ import { ReportAdminService } from './modules/reportAdmin/reportAdmin.service';
     TasksModule,
     ReportAdminModule,
     ReportModule,
+    ApiDocsModule,
     RedisModule,
   ],
   controllers: [
@@ -68,7 +72,8 @@ import { ReportAdminService } from './modules/reportAdmin/reportAdmin.service';
     PlatformController,
     HistoryController,
     ReportAdminController,
-    ReportController
+    ReportController,
+    ApiDocsController,
   ],
   providers: [
     AppService,
@@ -80,7 +85,8 @@ import { ReportAdminService } from './modules/reportAdmin/reportAdmin.service';
     PlatformsService,
     HistoryService,
     ReportService,
-    ReportAdminService
+    ReportAdminService,
+    ApiDocService,
   ],
 })
 export class AppModule {}

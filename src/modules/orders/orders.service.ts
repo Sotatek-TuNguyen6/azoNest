@@ -23,16 +23,27 @@ import axios from 'axios';
 import { CommonService } from 'src/common/service/common.service';
 import { CommonResponse } from 'src/common/dtos/common-response.dto';
 import { OrderItem } from './interface/order.interface';
-import { UsersService } from '../users/users.service';
 import { ProductService } from '../products/products.service';
 import { User } from '../users/schemas/user.schema';
 import { HistoryService } from '../history/history.service';
+import { PlatformsService } from '../platforms/platforms.service';
 
 interface PayloadOrder {
   action: Action;
   key: string;
-  orders: string;
+  orders?: string;
+  link?: string;
+  quantity?: number;
+  service?: string;
 }
+
+export interface ResponseOrderStatus {
+  charge: number;
+  start_count: number;
+  status: string;
+  remains: number;
+}
+
 @Injectable()
 export class OrderService {
   constructor(
@@ -40,10 +51,9 @@ export class OrderService {
     @InjectModel(User.name) private userModel: Model<User>,
     private readonly configService: ConfigService,
     private readonly commonService: CommonService,
-    private readonly userService: UsersService,
+    private readonly platFromService: PlatformsService,
     private readonly productService: ProductService,
     private readonly historyService: HistoryService,
-
   ) {}
   private readonly logger = new Logger(OrderService.name);
 
@@ -54,7 +64,7 @@ export class OrderService {
         orderStatus: { $nin: ['Hoàn thành', 'Tạm dừng'] },
       });
       if (getService && getService.length > 0) {
-        const listOrder = getService.map((item) => item.orderItems[0].order);
+        const listOrder = getService.map((item) => item.orderItems.order);
 
         let payload: PayloadOrder;
         switch (origin) {
@@ -144,14 +154,14 @@ export class OrderService {
           payload = {
             action: Action.status,
             key: this.configService.get<string>('AZO_KEY'),
-            orders: order.orderItems[0].order.toString(),
+            orders: order.orderItems.order.toString(),
           };
           break;
         case OriginWeb.DG1:
           payload = {
             action: Action.status,
             key: this.configService.get<string>('DG1_KEY'),
-            orders: order.orderItems[0].order.toString(),
+            orders: order.orderItems.order.toString(),
           };
           break;
         default:
@@ -172,7 +182,7 @@ export class OrderService {
       const responseData: ResponseInforService = response.data;
       if (responseData) {
         await this.ordersModel.findOneAndUpdate(
-          { 'orderItems.order': order.orderItems[0].order.toString() },
+          { 'orderItems.order': order.orderItems.order.toString() },
           {
             $set: {
               charge: responseData.charge,
@@ -258,14 +268,14 @@ export class OrderService {
     }
   }
 
-   /**
+  /**
    * Create an order and deduct the total amount from the user's balance using a transaction
    * @param {OrderItem[]} orderItem - List of items in the order
    * @param {Types.ObjectId} userId - The ID of the user placing the order
    * @returns {Promise<Orders>} - The created order
    */
-   async createOrder(
-    orderItem: OrderItem[],
+  async createOrder(
+    orderItem: OrderItem,
     userId: Types.ObjectId,
   ): Promise<Orders> {
     const session: ClientSession = await this.ordersModel.db.startSession(); // Bắt đầu session transaction
@@ -277,12 +287,45 @@ export class OrderService {
       if (!user) throw new NotFoundException('User ID does not exist');
 
       // Kiểm tra nếu danh sách sản phẩm trống
-      if (!orderItem || orderItem.length === 0) {
+      if (!orderItem) {
         throw new NotFoundException('Order items cannot be empty');
       }
 
-      const product_value = orderItem[0].service;
+      const product_value = orderItem.service;
       const product = await this.productService.getByValue(product_value);
+      const platform = product.platform;
+
+      const findPlatform = await this.platFromService.getById(platform);
+      const url = findPlatform.url;
+      const payload: PayloadOrder = {
+        action: Action.add,
+        service: product.value,
+        link: orderItem.link,
+        quantity: orderItem.quantity,
+        key:
+          product.origin === OriginWeb.AZO
+            ? this.configService.get<string>('AZO_KEY')
+            : this.configService.get<string>('DG1_KEY'),
+      };
+
+      const urlEncodedData = new URLSearchParams();
+      urlEncodedData.append('key', payload.key);
+      urlEncodedData.append('action', payload.action);
+      urlEncodedData.append('service', payload.service);
+      urlEncodedData.append('link', payload.link);
+      urlEncodedData.append('quantity', payload.quantity.toString());
+
+      const response = await axios.post(url, urlEncodedData, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
+
+      if (response.data || !response.data.order)
+        throw new Error('Create order fail');
+
+      const responseData = response.data.order;
+      orderItem = { ...orderItem, order: responseData };
 
       // Tính tổng số tiền đơn hàng
       const totalAmount = this.calculateTotal(orderItem, product.rate);
@@ -309,7 +352,7 @@ export class OrderService {
       // Tạo đơn hàng mới
       const newOrder = new this.ordersModel({
         userId,
-        items: orderItem,
+        orderItems: orderItem,
         totalAmount,
         origin: product.origin,
       });
@@ -320,9 +363,10 @@ export class OrderService {
       // Commit transaction nếu tất cả thành công
       await session.commitTransaction();
       session.endSession();
-      return newOrder;
+      return responseData;
     } catch (error) {
       // Abort transaction nếu có lỗi
+      console.log('🚀 ~ OrderService ~ error:', error);
       await session.abortTransaction();
       session.endSession();
       throw new InternalServerErrorException('Failed to create order');
@@ -335,7 +379,39 @@ export class OrderService {
    * @param {number} rate - The rate of the product
    * @returns {number} - The total amount
    */
-  private calculateTotal(orderItems: OrderItem[], rate: number): number {
-    return orderItems.reduce((total, item) => total + item.quantity * rate, 0);
+  private calculateTotal(orderItems: OrderItem, rate: number): number {
+    return orderItems.quantity * rate;
+  }
+
+  async getOrders(ordersId: string[]): Promise<ResponseOrderStatus> {
+    try {
+      const orders = await this.ordersModel
+        .find({ 'orderItems.order': { $in: ordersId } })
+        .select('charge start_count orderStatus remains')
+        .exec();
+
+      if (orders.length === 1) {
+        const singleOrder = orders[0];
+        return {
+          charge: singleOrder.charge,
+          start_count: singleOrder.start_count,
+          status: singleOrder.orderStatus,
+          remains: singleOrder.remains,
+        };
+      }
+
+      const ordersObj = {};
+      orders.forEach((order) => {
+        ordersObj[order.orderItems.order] = {
+          charge: order.charge,
+          start_count: order.start_count,
+          status: order.orderStatus, // Đổi tên orderStatus thành status
+          remains: order.remains,
+        };
+      });
+    } catch (error) {
+      console.log('🚀 ~ OrderService ~ getOrders ~ error:', error);
+      throw new InternalServerErrorException('Failed to get orders');
+    }
   }
 }

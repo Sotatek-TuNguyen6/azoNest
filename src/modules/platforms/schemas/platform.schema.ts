@@ -1,7 +1,14 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 export type PlatformDocument = HydratedDocument<Platform>;
 
+export interface ResponsePlatform {
+  _id: Types.ObjectId;
+  url: string;
+  apikey: string;
+  name: string;
+  status: boolean;
+}
 @Schema({ timestamps: true })
 export class Platform {
   @Prop({ required: true })

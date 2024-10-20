@@ -1,6 +1,6 @@
 import { Types } from 'mongoose';
 
-export interface User {
+export interface Product {
   _id: Types.ObjectId;
   value: string;
   label: string;
@@ -12,4 +12,5 @@ export interface User {
   min: number;
   max: number;
   refill: boolean;
+  platform: Types.ObjectId;
 }

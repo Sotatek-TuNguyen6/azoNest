@@ -1,13 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
-import { User } from 'src/modules/users/schemas/user.schema';
+import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
 import { MethodPay } from 'src/types/enum';
 export type HistoryDocument = HydratedDocument<History>;
 
 @Schema({ timestamps: true })
 export class History {
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
-  user: User;
+  user: Types.ObjectId;
 
   @Prop()
   method: MethodPay;

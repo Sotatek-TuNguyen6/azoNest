@@ -14,8 +14,17 @@ export enum Action {
   services = 'services',
   status = 'status',
   order = 'order',
+  add = 'add',
 }
 
+export enum StatusService {
+  Pending = 'Pending',
+  Processing = 'Processing',
+  'In Progress' = 'In Progress',
+  Completed = 'Completed',
+  Partial = 'Partial',
+  Canceled = 'Canceled',
+}
 export interface ResponeService {
   service: number;
   name: string;

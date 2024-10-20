@@ -1,15 +1,21 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
 import { ApiDocsController } from './apidocs.controller';
 import { ApiDocService } from './apidocs.service';
-
+import { UsersModule } from '../users/users.module';
+import { ProductsModule } from '../products/products.module';
+import { OrdersModule } from '../orders/orders.module';
+import { HistoryModule } from '../history/history.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature(),
+    // MongooseModule.forFeature(),
+    UsersModule,
+    ProductsModule,
+    HistoryModule,
+    OrdersModule,
   ],
   controllers: [ApiDocsController],
   providers: [ApiDocService],
-  exports: [MongooseModule, ApiDocService],
+  exports: [ApiDocService],
 })
-export class ReportModule {}
+export class ApiDocsModule {}

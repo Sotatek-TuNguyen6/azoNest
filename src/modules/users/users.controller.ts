@@ -70,8 +70,8 @@ export class UsersController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Roles(Role.admin)
+  // @UseGuards(JwtAuthGuard)
+  // @Roles(Role.admin)
   @Get()
   async findAll() {
     try {
