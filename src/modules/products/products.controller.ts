@@ -25,10 +25,10 @@ export class ProductController {
   constructor(
     private readonly productService: ProductService,
     private readonly platFormService: PlatformsService,
-  ) {}
+  ) { }
 
-  @UseGuards(JwtAuthGuard)
-  @Roles(Role.admin)
+  // @UseGuards(JwtAuthGuard)
+  // @Roles(Role.admin)
   @Post('/import')
   async importProduct(@Body() importProductDto: ImportProductDto) {
     try {
@@ -65,6 +65,7 @@ export class ProductController {
         'Fetched products successfully',
         products,
       );
+
     } catch (error) {
       throw new HttpException(
         {
@@ -127,8 +128,8 @@ export class ProductController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Roles(Role.admin)
+  // @UseGuards(JwtAuthGuard)
+  // @Roles(Role.admin)
   @Patch('/:id')
   async update(
     @Param('id') id: string,
@@ -158,6 +159,27 @@ export class ProductController {
         {
           status: StatusEnum.ERROR,
           message: 'Failed to get user',
+          error: error.message,
+        },
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post("/removeAll")
+  async removeAll() {
+    try {
+      await this.productService.removeAll()
+
+      return new CommonResponse(
+        StatusEnum.SUCCESS,
+        "Remove successful!"
+      )
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: StatusEnum.ERROR,
+          message: 'Failed to delete product',
           error: error.message,
         },
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,

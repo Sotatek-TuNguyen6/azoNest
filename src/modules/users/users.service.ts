@@ -51,7 +51,7 @@ export class UsersService {
   }
 
   async findOne(id: string | Types.ObjectId): Promise<User> {
-    const user = await this.userModel.findById(id);
+    const user = await this.userModel.findById(id).select('-password');
     if (!user) {
       throw new Error('User not found');
     }

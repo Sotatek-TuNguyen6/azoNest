@@ -9,4 +9,7 @@ export interface User {
   password: string;
   role: Role;
   tokenVersion: number;
+  apiKey: string;
+  money: number;
+  phoneNumber: string;
 }

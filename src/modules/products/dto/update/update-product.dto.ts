@@ -14,6 +14,7 @@ export class UpdateProductDto {
   value: string;
 
   @IsString()
+  @IsOptional()
   @MinLength(1)
   label: string;
 

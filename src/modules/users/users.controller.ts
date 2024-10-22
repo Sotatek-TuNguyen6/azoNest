@@ -9,6 +9,7 @@ import {
   HttpStatus,
   UseGuards,
   HttpException,
+  Req,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create/create-user.dto';
@@ -19,6 +20,8 @@ import { CommonResponse } from 'src/common/dtos/common-response.dto';
 import { Role, StatusEnum } from 'src/types/enum';
 import { Roles } from 'src/decorator/roles.decorator';
 import { SkipThrottle } from '@nestjs/throttler';
+import { CustomRequest } from 'src/common/interfaces/custom-request.interface';
+import { UserValidate } from 'src/guards/jwt.strategy';
 
 @SkipThrottle()
 @Controller('users')
@@ -28,11 +31,11 @@ export class UsersController {
   @Post()
   async create(@Body() createUserDto: CreateUserDto) {
     try {
-      const createdUser = await this.usersService.create(createUserDto);
+      await this.usersService.create(createUserDto);
       return new CommonResponse(
         StatusEnum.SUCCESS,
         'User created successfully',
-        createdUser,
+        // createdUser,
       );
     } catch (error) {
       throw new HttpException(
@@ -57,9 +60,10 @@ export class UsersController {
         accessToken,
       );
     } catch (error) {
-      if (error.message === 'Email not exists') {
-        throw new HttpException('Email not exists', HttpStatus.BAD_GATEWAY);
+      if (error.message === 'Email not exists' || error.message === "Invalid password") {
+        throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
       }
+      
 
       throw new HttpException(
         {
@@ -72,8 +76,8 @@ export class UsersController {
     }
   }
 
-  // @UseGuards(JwtAuthGuard)
-  // @Roles(Role.admin)
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.admin)
   @Get()
   async findAll() {
     try {
@@ -127,10 +131,13 @@ export class UsersController {
     }
   }
 
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.usersService.findOne(+id);
-  // }
+  @UseGuards(JwtAuthGuard)
+  @Get('/detail')
+  findOne(@Req() req: CustomRequest,
+  ) {
+    const user: UserValidate = req.user;
+    return this.usersService.findOne(user.userId);
+  }
 
   @UseGuards(JwtAuthGuard)
   @Roles(Role.admin)
@@ -143,11 +150,11 @@ export class UsersController {
   @Post('forgotPassword')
   async forgotPassword(@Body('email') email: string) {
     try {
-      await this.usersService.forgotPassword(email)
+      await this.usersService.forgotPassword(email);
       return new CommonResponse(
         StatusEnum.SUCCESS,
-        'ForgotPassword successfull'
-      )
+        'ForgotPassword successfull',
+      );
     } catch (error) {
       throw new HttpException(
         {
@@ -162,13 +169,16 @@ export class UsersController {
 
   @SkipThrottle({ default: false })
   @Post('resetPassword')
-  async resetPassword(@Body('token') token: string, @Body('newPassword') newPassword: string) {
+  async resetPassword(
+    @Body('token') token: string,
+    @Body('newPassword') newPassword: string,
+  ) {
     try {
-      await this.usersService.resetPassword(token, newPassword)
+      await this.usersService.resetPassword(token, newPassword);
       return new CommonResponse(
         StatusEnum.SUCCESS,
-        'ResetPassword successfull'
-      )
+        'ResetPassword successfull',
+      );
     } catch (error) {
       throw new HttpException(
         {

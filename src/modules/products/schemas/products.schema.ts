@@ -37,12 +37,18 @@ export class Products {
   @Prop()
   description: string;
 
+  @Prop()
+  category: string;
+
+  @Prop()
+  platform: string;
+
   @Prop({
     type: MongooseSchema.Types.ObjectId,
     ref: 'Platform',
     required: true,
   })
-  platform: Types.ObjectId;
+  originPlatform: Types.ObjectId;
 }
 
 export const ProductsSchema = SchemaFactory.createForClass(Products);

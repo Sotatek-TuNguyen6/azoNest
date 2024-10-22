@@ -1,0 +1,49 @@
+version: '3'
+
+services:
+  # NestJS service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nestjs-app
+    restart: unless-stopped
+    ports:
+      - '5000:5000'  # Maps the internal 3000 port to the host machine
+    environment:
+      - MONGO_URL=mongodb://mongo:27017/nestdb
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - mongo
+      - redis
+    volumes:
+      - .:/app  # Mount the current directory to the /app directory inside the container
+      - /app/node_modules # Prevent node_modules from being overwritten
+
+  # MongoDB service
+  mongo:
+    image: mongo:6.0
+    container_name: mongodb
+    restart: unless-stopped
+    ports:
+      - '27017:27017'  # Expose MongoDB port
+    volumes:
+      - mongo_data:/data/db  # Persist MongoDB data
+    environment:
+      MONGO_INITDB_DATABASE: nestdb  # Initialize MongoDB with the 'nestdb' database
+
+  # Redis service
+  redis:
+    image: redis:7
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'  # Expose Redis port
+    volumes:
+      - redis_data:/data  # Persist Redis data
+
+# Define named volumes to persist data
+volumes:
+  mongo_data:
+  redis_data:

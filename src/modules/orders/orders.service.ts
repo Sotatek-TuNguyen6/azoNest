@@ -293,7 +293,7 @@ export class OrderService {
 
       const product_value = orderItem.service;
       const product = await this.productService.getByValue(product_value);
-      const platform = product.platform;
+      const platform = product.originPlatform;
 
       const findPlatform = await this.platFromService.getById(platform);
       const url = findPlatform.url;

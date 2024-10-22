@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -10,6 +10,7 @@ import { URLSearchParams } from 'url';
 import { CommonService } from 'src/common/service/common.service';
 import { CustomLoggerService } from 'src/logger/custom-logger.service';
 import { UpdateProductDto } from './dto/update/update-product.dto';
+import { PlatformsService } from '../platforms/platforms.service';
 
 interface Data {
   key: string;
@@ -22,8 +23,9 @@ export class ProductService {
     @InjectModel(Products.name) private productsModel: Model<Products>,
     private readonly configService: ConfigService,
     private readonly commonService: CommonService,
+    private readonly platformService: PlatformsService,
     private readonly logger: CustomLoggerService,
-  ) {}
+  ) { }
 
   async importData(
     origin: OriginWeb,
@@ -54,7 +56,11 @@ export class ProductService {
     urlEncodedData.append('key', data.key);
     urlEncodedData.append('action', data.action);
 
-    const url = this.commonService.getUrlByOrigin(origin);
+    const findPlatform = await this.platformService.getById(platform)
+
+    if (!findPlatform) throw new BadRequestException("Platform not found");
+
+    const url = findPlatform.url
 
     const response = await axios.post(url, urlEncodedData, {
       headers: {
@@ -66,8 +72,8 @@ export class ProductService {
       const filteredData: ResponeService[] =
         origin === OriginWeb.DG1
           ? response.data.filter(
-              (item: ResponeService) => item.platform === 'Youtube',
-            )
+            (item: ResponeService) => item.platform === 'Youtube',
+          )
           : response.data;
 
       const createdProducts = await Promise.all(
@@ -80,7 +86,9 @@ export class ProductService {
             max: item.max,
             rate: item.rate,
             refill: item.refill,
-            platform,
+            originPlatform: platform,
+            platform: "Youtube",
+            category: OriginWeb.DG1 === origin ? item.category : "Youtube | 4000H Watchtime"
           });
 
           // Lưu sản phẩm vào cơ sở dữ liệu
@@ -97,7 +105,17 @@ export class ProductService {
   }
 
   async getService(): Promise<Products[]> {
-    return this.productsModel.find().sort({ createdAt: -1 }).exec(); 
+    return this.productsModel.aggregate([
+      {
+        $group: {
+          _id: "$category",
+          products: { $push: "$$ROOT" } 
+        }
+      },
+      {
+        $sort: { _id: 1 } 
+      }
+    ]).exec();
   }
 
   async getById(id: string): Promise<Products> {
@@ -164,5 +182,9 @@ export class ProductService {
 
   async getByOrigin(origin: OriginWeb) {
     return this.productsModel.find({ origin });
+  }
+
+  async removeAll() {
+    return this.productsModel.deleteMany({})
   }
 }
