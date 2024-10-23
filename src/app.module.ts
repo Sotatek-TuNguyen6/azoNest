@@ -59,7 +59,6 @@ import { HistoryLoginService } from './modules/historyLogin/history-login.servic
     OrdersModule,
     CommonModule,
     LoggerModule,
-    OrdersModule,
     PlatformsModule,
     HistoryModule,
     TasksModule,

@@ -8,10 +8,12 @@ import { UsersModule } from '../users/users.module';
 import { ProductsModule } from '../products/products.module';
 import { HistoryModule } from '../history/history.module';
 import { PlatformsModule } from '../platforms/platforms.module';
+import { OrderServiceInit } from './order.init';
+import { Counter, CounterSchema } from './schemas/counter.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Orders.name, schema: OrdersSchema }]),
+    MongooseModule.forFeature([{ name: Orders.name, schema: OrdersSchema }, { name: Counter.name, schema: CounterSchema },]),
     CommonModule,
     UsersModule,
     ProductsModule,
@@ -19,7 +21,7 @@ import { PlatformsModule } from '../platforms/platforms.module';
     PlatformsModule,
   ],
   controllers: [OrderController],
-  providers: [OrderService],
+  providers: [OrderServiceInit, OrderService],
   exports: [MongooseModule, OrderService],
 })
-export class OrdersModule {}
+export class OrdersModule { }
