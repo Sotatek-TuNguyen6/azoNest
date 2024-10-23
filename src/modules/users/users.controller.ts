@@ -10,6 +10,10 @@ import {
   UseGuards,
   HttpException,
   Req,
+  ForbiddenException,
+  BadRequestException,
+  Ip,
+  Headers,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create/create-user.dto';
@@ -51,9 +55,9 @@ export class UsersController {
 
   @Post('/login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() loginDto: LoginDto) {
+  async login(@Body() loginDto: LoginDto, @Ip() ip: string, @Headers('User-Agent') userAgent: string) {
     try {
-      const accessToken = await this.usersService.login(loginDto);
+      const accessToken = await this.usersService.login(loginDto, ip, userAgent);
       return new CommonResponse(
         StatusEnum.SUCCESS,
         'Login successful',
@@ -63,7 +67,6 @@ export class UsersController {
       if (error.message === 'Email not exists' || error.message === "Invalid password") {
         throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
       }
-      
 
       throw new HttpException(
         {
@@ -76,8 +79,8 @@ export class UsersController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Roles(Role.admin)
+  // @UseGuards(JwtAuthGuard)
+  // @Roles(Role.admin)
   @Get()
   async findAll() {
     try {
@@ -140,10 +143,41 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Roles(Role.admin)
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(id, updateUserDto);
+  @Patch()
+  async update(@Body() updateUserDto: UpdateUserDto, @Req() req: CustomRequest) {
+    try {
+      const user = req.user
+
+      if (updateUserDto.role && user.role !== Role.admin) {
+        throw new ForbiddenException('User is not admin');
+      }
+
+      await this.usersService.update(user.userId, updateUserDto)
+      return new CommonResponse(
+        StatusEnum.SUCCESS,
+        'Update successs',
+      );
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw new HttpException(
+          {
+            status: StatusEnum.ERROR,
+            message: error.message,
+            error: error.message,
+          },
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      throw new HttpException(
+        {
+          status: StatusEnum.ERROR,
+          message: 'Failed add money to user',
+          error: error.message,
+        },
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
   }
 
   @SkipThrottle({ default: false })
@@ -191,6 +225,13 @@ export class UsersController {
     }
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Post("/logout")
+  async logout(@Req() req: CustomRequest) {
+    const user = req.user
+    await this.usersService.logout(user.userId)
+    return true
+  }
   // @Delete(':id')
   // remove(@Param('id') id: string) {
   //   return this.usersService.remove(+id);

@@ -27,7 +27,7 @@ export class OrderItem {
 @Schema({ timestamps: true })
 export class Orders {
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
-  user: User;
+  user: Types.ObjectId;
 
   @Prop({ required: true, default: 0.0 })
   totalPrice: number;

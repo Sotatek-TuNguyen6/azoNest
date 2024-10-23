@@ -7,6 +7,7 @@ import { AuthModule } from 'src/guards/auth.module';
 import { HistoryModule } from '../history/history.module';
 import { MailModule } from '../mail/mail.module';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { HistoryLoginModule } from '../historyLogin/history-login.module';
 
 @Module({
   imports: [
@@ -17,7 +18,8 @@ import { ThrottlerModule } from '@nestjs/throttler';
     }]),
     AuthModule,
     HistoryModule,
-    MailModule
+    MailModule,
+    HistoryLoginModule
   ],
   controllers: [UsersController],
   providers: [UsersService],

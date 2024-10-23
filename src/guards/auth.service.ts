@@ -41,7 +41,7 @@ export class AuthService {
     };
   }
 
-  async logout(userId: string): Promise<void> {
+  async logout(userId: Types.ObjectId): Promise<void> {
     await this.redisClient.del(`user-token-version-${userId}`);
   }
 }

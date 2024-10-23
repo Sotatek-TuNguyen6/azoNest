@@ -36,6 +36,9 @@ import { ApiDocsModule } from './modules/apidocs/apidocs.module';
 import { ApiDocsController } from './modules/apidocs/apidocs.controller';
 import { ApiDocService } from './modules/apidocs/apidocs.service';
 import { MailModule } from './modules/mail/mail.module';
+import { HistoryLoginModule } from './modules/historyLogin/history-login.module';
+import { HistoryLoginController } from './modules/historyLogin/history-login.controller';
+import { HistoryLoginService } from './modules/historyLogin/history-login.service';
 
 @Module({
   imports: [
@@ -64,6 +67,7 @@ import { MailModule } from './modules/mail/mail.module';
     ReportModule,
     ApiDocsModule,
     RedisModule,
+    HistoryLoginModule,
     MailModule
   ],
   controllers: [
@@ -76,6 +80,7 @@ import { MailModule } from './modules/mail/mail.module';
     ReportAdminController,
     ReportController,
     ApiDocsController,
+    HistoryLoginController
   ],
   providers: [
     AppService,
@@ -89,6 +94,7 @@ import { MailModule } from './modules/mail/mail.module';
     ReportService,
     ReportAdminService,
     ApiDocService,
+    HistoryLoginService
   ],
 })
 export class AppModule {}

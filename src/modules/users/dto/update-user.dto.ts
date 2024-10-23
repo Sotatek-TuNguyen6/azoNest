@@ -18,4 +18,7 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
 
   @IsOptional()
   role?: Role;
+
+  @IsOptional()
+  password?: string;
 }
