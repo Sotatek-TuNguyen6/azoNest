@@ -33,7 +33,7 @@ export class UsersService {
     const { email, password } = createUserDto;
     const findUser = await this.userModel.findOne({ email });
     if (findUser) {
-      throw new Error('Email already exists');
+      throw new BadRequestException('Email already exists');
     }
 
     const apiKey = crypto.randomBytes(16).toString('hex');
