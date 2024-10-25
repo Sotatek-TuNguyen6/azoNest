@@ -64,10 +64,16 @@ export class UsersController {
         accessToken,
       );
     } catch (error) {
-      if (error.message === 'Email not exists' || error.message === "Invalid password") {
-        throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+      if (error instanceof BadRequestException) {
+        throw new HttpException(
+          {
+            status: StatusEnum.ERROR,
+            message: error.message,
+            error: error.message,
+          },
+          HttpStatus.BAD_REQUEST,
+        );
       }
-
       throw new HttpException(
         {
           status: StatusEnum.ERROR,
@@ -136,10 +142,37 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Get('/detail')
-  findOne(@Req() req: CustomRequest,
+  async findOne(@Req() req: CustomRequest,
   ) {
-    const user: UserValidate = req.user;
-    return this.usersService.findOne(user.userId);
+    try {
+      const user: UserValidate = req.user;
+      const result = await this.usersService.findOne(user.userId);
+
+      return new CommonResponse(
+        StatusEnum.SUCCESS,
+        "Get successful",
+        result
+      )
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw new HttpException(
+          {
+            status: StatusEnum.ERROR,
+            message: error.message,
+            error: error.message,
+          },
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      throw new HttpException(
+        {
+          status: StatusEnum.ERROR,
+          message: 'Failed add money to user',
+          error: error.message,
+        },
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   @UseGuards(JwtAuthGuard)
