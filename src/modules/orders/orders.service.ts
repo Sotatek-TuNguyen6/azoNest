@@ -27,6 +27,8 @@ import { ProductService } from '../products/products.service';
 import { User } from '../users/schemas/user.schema';
 import { HistoryService } from '../history/history.service';
 import { PlatformsService } from '../platforms/platforms.service';
+import { Product } from '../products/interface/product.interface';
+import { ProductsDocument } from '../products/schemas/products.schema';
 
 interface PayloadOrder {
   action: Action;
@@ -44,6 +46,10 @@ export interface ResponseOrderStatus {
   remains: number;
 }
 
+export interface ResponseCreateOrder {
+  order: string
+}
+
 @Injectable()
 export class OrderService {
   constructor(
@@ -54,8 +60,42 @@ export class OrderService {
     private readonly platFromService: PlatformsService,
     private readonly productService: ProductService,
     private readonly historyService: HistoryService,
-  ) {}
+  ) { }
   private readonly logger = new Logger(OrderService.name);
+
+  async sendOrder(url: string, key: string, orderItem: OrderItem): Promise<ResponseCreateOrder> {
+    try {
+      const payload: PayloadOrder = {
+        action: Action.add,
+        service: orderItem.service,
+        link: orderItem.link,
+        quantity: orderItem.quantity,
+        key
+      };
+
+      const urlEncodedData = new URLSearchParams();
+      urlEncodedData.append('key', payload.key);
+      urlEncodedData.append('action', payload.action);
+      urlEncodedData.append('service', payload.service);
+      urlEncodedData.append('link', payload.link);
+      urlEncodedData.append('quantity', payload.quantity.toString());
+
+      const response = await axios.post(url, urlEncodedData, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
+
+      if (response.data || !response.data.order)
+        throw new Error('Create order fail');
+
+      const responseData = response.data;
+      return responseData
+    } catch (error) {
+      this.logger.error(error)
+      throw error
+    }
+  }
 
   async informationOrder(origin: OriginWeb) {
     try {
@@ -277,7 +317,7 @@ export class OrderService {
   async createOrder(
     orderItem: OrderItem,
     userId: Types.ObjectId,
-  ): Promise<Orders> {
+  ): Promise<boolean> {
     const session: ClientSession = await this.ordersModel.db.startSession(); // Bắt đầu session transaction
     session.startTransaction();
 
@@ -293,39 +333,8 @@ export class OrderService {
 
       const product_value = orderItem.service;
       const product = await this.productService.getByValue(product_value);
+      if (!product) throw new BadRequestException("Product not found");
       const platform = product.originPlatform;
-
-      const findPlatform = await this.platFromService.getById(platform);
-      const url = findPlatform.url;
-      const payload: PayloadOrder = {
-        action: Action.add,
-        service: product.value,
-        link: orderItem.link,
-        quantity: orderItem.quantity,
-        key:
-          product.origin === OriginWeb.AZO
-            ? this.configService.get<string>('AZO_KEY')
-            : this.configService.get<string>('DG1_KEY'),
-      };
-
-      const urlEncodedData = new URLSearchParams();
-      urlEncodedData.append('key', payload.key);
-      urlEncodedData.append('action', payload.action);
-      urlEncodedData.append('service', payload.service);
-      urlEncodedData.append('link', payload.link);
-      urlEncodedData.append('quantity', payload.quantity.toString());
-
-      const response = await axios.post(url, urlEncodedData, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      });
-
-      if (response.data || !response.data.order)
-        throw new Error('Create order fail');
-
-      const responseData = response.data.order;
-      orderItem = { ...orderItem, order: responseData };
 
       // Tính tổng số tiền đơn hàng
       const totalAmount = this.calculateTotal(orderItem, product.rate);
@@ -334,6 +343,14 @@ export class OrderService {
       if (user.money < totalAmount) {
         throw new BadRequestException('Insufficient balance');
       }
+
+      const findPlatform = await this.platFromService.getById(platform);
+      if (!findPlatform) throw new BadRequestException("Platform not found");
+
+      const url = findPlatform.url;
+
+      const result = await this.sendOrder(url, findPlatform.apikey, orderItem)
+      orderItem = { ...orderItem, order: result.order, name: product.label };
 
       // Trừ số tiền từ tài khoản người dùng
       user.money -= totalAmount;
@@ -351,7 +368,7 @@ export class OrderService {
 
       // Tạo đơn hàng mới
       const newOrder = new this.ordersModel({
-        userId,
+        user: userId,
         orderItems: orderItem,
         totalAmount,
         origin: product.origin,
@@ -363,7 +380,7 @@ export class OrderService {
       // Commit transaction nếu tất cả thành công
       await session.commitTransaction();
       session.endSession();
-      return responseData;
+      return true;
     } catch (error) {
       // Abort transaction nếu có lỗi
       console.log('🚀 ~ OrderService ~ error:', error);
@@ -379,8 +396,12 @@ export class OrderService {
    * @param {number} rate - The rate of the product
    * @returns {number} - The total amount
    */
-  private calculateTotal(orderItems: OrderItem, rate: number): number {
-    return orderItems.quantity * rate;
+  private calculateTotal(orderItems: OrderItem[] | OrderItem, rate: number): number {
+    if (Array.isArray(orderItems)) {
+      return orderItems.reduce((total, item) => total + item.quantity * rate, 0);
+    } else {
+      return orderItems.quantity * rate;
+    }
   }
 
   async getOrders(ordersId: string[]): Promise<ResponseOrderStatus> {
@@ -414,4 +435,117 @@ export class OrderService {
       throw new InternalServerErrorException('Failed to get orders');
     }
   }
+
+  async getAllOrderByUser(userId: Types.ObjectId): Promise<Orders[]> {
+    return await this.ordersModel.find({ user: userId })
+  }
+
+  async createMany(userId: Types.ObjectId, orders: string) {
+    if (!orders) throw new BadRequestException("Orders are required");
+
+    const session: ClientSession = await this.ordersModel.db.startSession();
+    session.startTransaction();
+
+    try {
+      // Lấy thông tin người dùng
+      const user = await this.userModel.findById(userId).session(session);
+      if (!user) throw new BadRequestException("User ID does not exist");
+
+      // Lấy tất cả các sản phẩm
+      const products = await this.productService.getAll();
+
+      const allOrderItems: OrderItem[] = [];
+      const totalAmounts: number[] = [];
+      const firstStep = orders.split("\n");
+      const arrayLink: string[] = []
+      const arrayKey: string[] = []
+
+      for (const item of firstStep) {
+        const parts = item.split("|").map((part) => part.trim());
+
+        if (parts.length < 3) {
+          throw new BadRequestException("Each order line must have at least service_id, link, and quantity");
+        }
+
+        const [serviceId, link, quantityStr] = parts;
+        if (!/^\d+$/.test(quantityStr)) {
+          throw new BadRequestException("Quantity must be a valid number");
+        }
+        const quantity = parseInt(quantityStr, 10);
+
+        // Tìm sản phẩm với serviceId tương ứng
+        const product = products.find((prod) => prod.value === serviceId);
+        if (!product) throw new BadRequestException("Product not found");
+
+        const platForm = await this.platFromService.getById(product.originPlatform);
+        if (!platForm) throw new BadRequestException("Platform not found");
+
+        arrayLink.push(platForm.url);
+        arrayKey.push(platForm.apikey);
+        const itemTotal = quantity * product.rate;
+        totalAmounts.push(itemTotal);
+
+        const orderItems: OrderItem = {
+          service: serviceId,
+          link,
+          quantity,
+          name: product.label,
+        };
+
+        allOrderItems.push(orderItems);
+      }
+
+      const totalAmount = totalAmounts.reduce((sum, amount) => sum + amount, 0);
+
+      if (user.money < totalAmount) {
+        throw new BadRequestException("Insufficient balance");
+      }
+
+      user.money -= totalAmount;
+      await user.save({ session });
+
+      await this.historyService.createHistory(
+        userId.toString(),
+        MethodPay.HANDLE,
+        totalAmount,
+        `Bulk order placed by user ${userId}`
+      );
+
+      // Tạo và lưu tất cả các đơn hàng
+      const orderPromises = [];
+      for (const [index, orderItems] of allOrderItems.entries()) {
+        // Gọi hàm sendOrder và chờ kết quả
+        // const result = await this.sendOrder(arrayLink[index], arrayKey[index], orderItems);
+
+        // Cập nhật orderItems với thông tin mới
+        const updatedOrderItems = { ...orderItems, order: index };
+
+        // Tạo đối tượng đơn hàng mới
+        const newOrder = new this.ordersModel({
+          user: userId,
+          orderItems: updatedOrderItems,
+          totalAmount: totalAmounts[index],
+          status: "Pending",
+        });
+
+        // Lưu lời hứa (promise) vào  orderPromises
+        orderPromises.push(newOrder.save({ session }));
+      }
+
+      await Promise.all(orderPromises);
+
+      await session.commitTransaction();
+      session.endSession();
+      this.logger.debug("Multiple orders created successfully");
+
+      return true;
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      this.logger.error("Transaction failed:", error);
+      throw error;
+    }
+  }
+
+
 }

@@ -205,4 +205,17 @@ export class UsersService {
     return this.authService.logout(id);
 
   }
+
+  async changeApiKey(id: Types.ObjectId) {
+    const user = await this.userModel.findById(id);
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+    const apiKey = crypto.randomBytes(16).toString('hex');
+    user.apiKey = apiKey;
+    await user.save();
+
+    return apiKey
+  }
 }

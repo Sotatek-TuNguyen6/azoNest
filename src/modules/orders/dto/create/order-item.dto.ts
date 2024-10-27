@@ -11,16 +11,4 @@ export class OrderItemDto {
   @IsString()
   @IsNotEmpty()
   service: string;
-
-  @IsString()
-  @IsNotEmpty()
-  order: string;
-
-  @IsString()
-  @IsNotEmpty()
-  name: string;
-
-  @IsString()
-  @IsNotEmpty()
-  keyword: string;
 }

@@ -14,6 +14,7 @@ import {
   BadRequestException,
   Ip,
   Headers,
+  Logger,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create/create-user.dto';
@@ -31,7 +32,7 @@ import { UserValidate } from 'src/guards/jwt.strategy';
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }
-
+  private readonly logger = new Logger()
   @Post()
   async create(@Body() createUserDto: CreateUserDto) {
     try {
@@ -269,4 +270,35 @@ export class UsersController {
   // remove(@Param('id') id: string) {
   //   return this.usersService.remove(+id);
   // }
+
+  @UseGuards(JwtAuthGuard)
+  @Post("/updateApiKey")
+  async updateAPiKey(@Req() req: CustomRequest) {
+    try {
+      const user = req.user
+
+      const result = await this.usersService.changeApiKey(user.userId);
+      return new CommonResponse(
+        StatusEnum.SUCCESS,
+        'Update ApiKey successfull',
+        result
+      );
+    } catch (error) {
+      this.logger.error(error)
+      const statusCode = error.status || HttpStatus.INTERNAL_SERVER_ERROR;
+      const message =
+        statusCode === HttpStatus.INTERNAL_SERVER_ERROR
+          ? 'Server busy, please try again later'
+          : 'Failed to changeApiKey user';
+
+      throw new HttpException(
+        {
+          status: StatusEnum.ERROR,
+          message: message,
+          error: error.message,
+        },
+        statusCode
+      );
+    }
+  }
 }

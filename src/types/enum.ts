@@ -64,3 +64,9 @@ export enum MethodPay {
   HANDLE = 'handle',
   BANK = 'bank',
 }
+
+
+export enum TypeHistory {
+  addMoney = "addMoney",
+  order = "order"
+}
