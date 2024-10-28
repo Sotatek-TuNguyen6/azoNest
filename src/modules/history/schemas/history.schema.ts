@@ -15,6 +15,9 @@ export class History {
   amount: number;
 
   @Prop()
+  amountOld: number;
+
+  @Prop()
   description: string;
 
   @Prop({default: TypeHistory.order})

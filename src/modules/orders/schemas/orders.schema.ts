@@ -1,7 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
-import { User } from 'src/modules/users/schemas/user.schema';
-import { Counter, CounterDocument } from './counter.schema';  // Import schema Counter
+import { CounterDocument } from './counter.schema';  // Import schema Counter
 
 export type OrdersDocument = HydratedDocument<Orders>;
 
@@ -13,8 +12,8 @@ export class OrderItem {
   @Prop({ type: String, required: true })
   link: string;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Product', required: true })
-  service: Types.ObjectId;
+  @Prop()
+  service: string;
 
   @Prop({ type: String, required: true })
   order: string;
@@ -34,7 +33,7 @@ export class Orders {
   @Prop({ required: true, default: 0.0 })
   totalPrice: number;
 
-  @Prop({ type: [{ type: MongooseSchema.Types.Mixed }], required: true })
+  @Prop({ required: true })
   orderItems: OrderItem;
 
   @Prop()
@@ -69,7 +68,7 @@ OrdersSchema.pre('save', async function (next) {
       { $inc: { seq: 1 } },
       { new: true, upsert: true }
     ).lean().exec() as CounterDocument;
-    
+
     order.orderCode = counter.seq;
   }
 

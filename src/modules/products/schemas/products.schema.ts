@@ -49,6 +49,9 @@ export class Products {
     required: true,
   })
   originPlatform: Types.ObjectId;
+
+  @Prop()
+  badges: string[]
 }
 
 export const ProductsSchema = SchemaFactory.createForClass(Products);

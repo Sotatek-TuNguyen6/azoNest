@@ -2,13 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { History } from './schemas/history.schema';
 import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import { MethodPay } from 'src/types/enum';
+import { MethodPay, TypeHistory } from 'src/types/enum';
 
 @Injectable()
 export class HistoryService {
   constructor(
     @InjectModel(History.name) private historyModel: Model<History>,
-  ) {}
+  ) { }
 
   /**
    * Create a new history record for a user transaction.
@@ -27,13 +27,17 @@ export class HistoryService {
     userId: string | Types.ObjectId,
     method: MethodPay,
     amount: number,
-    description: string,
+    amountOld: number,
+    description: string,  
+    type?: TypeHistory,
   ): Promise<History> {
     const newHistory = new this.historyModel({
       user: userId,
       method,
       amount,
+      amountOld,
       description,
+      type
     });
 
     return await newHistory.save();
@@ -50,5 +54,9 @@ export class HistoryService {
    */
   async getAll(): Promise<History[]> {
     return this.historyModel.find().exec();
+  }
+
+  async getByUser(userId: Types.ObjectId): Promise<History[]> {
+    return this.historyModel.find({ user: userId })
   }
 }

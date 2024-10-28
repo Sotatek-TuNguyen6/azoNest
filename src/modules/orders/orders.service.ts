@@ -8,7 +8,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Orders } from './schemas/orders.schema';
+import { Orders, OrdersDocument } from './schemas/orders.schema';
 import { ClientSession, Model, Types } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -27,8 +27,8 @@ import { ProductService } from '../products/products.service';
 import { User } from '../users/schemas/user.schema';
 import { HistoryService } from '../history/history.service';
 import { PlatformsService } from '../platforms/platforms.service';
-import { Product } from '../products/interface/product.interface';
-import { ProductsDocument } from '../products/schemas/products.schema';
+import { use } from 'passport';
+
 
 interface PayloadOrder {
   action: Action;
@@ -351,7 +351,7 @@ export class OrderService {
 
       const result = await this.sendOrder(url, findPlatform.apikey, orderItem)
       orderItem = { ...orderItem, order: result.order, name: product.label };
-
+      const moneyOld = user.money
       // Trừ số tiền từ tài khoản người dùng
       user.money -= totalAmount;
 
@@ -363,7 +363,8 @@ export class OrderService {
         userId.toString(),
         MethodPay.HANDLE,
         totalAmount,
-        `Order placed by user ${userId}`,
+        moneyOld,
+        `Add order - ${result.order}`,
       );
 
       // Tạo đơn hàng mới
@@ -436,9 +437,41 @@ export class OrderService {
     }
   }
 
-  async getAllOrderByUser(userId: Types.ObjectId): Promise<Orders[]> {
-    return await this.ordersModel.find({ user: userId })
+  // async getAllOrderByUser(userId: Types.ObjectId): Promise<Orders[]> {
+  //   return await this.ordersModel
+  //     .find({ user: userId })
+  //     // .populate({
+  //     //   path: 'orderItems.service', // Đường dẫn tới field `service` trong `orderItems`
+  //     //   model: 'Products', // Model tham chiếu là `Product`
+  //     // });
+  // }
+
+  async getAllOrderByUser(userId: Types.ObjectId) {
+    const products = await this.productService.getAll();
+
+    const productDict = products.reduce((acc, product) => {
+      acc[product.value] = product;
+      return acc;
+    }, {} as Record<string, typeof products[0]>);
+    this.logger.debug(productDict)
+    const orders = await this.ordersModel.find({ user: userId }).lean();
+
+    type OrderItemWithProduct = OrderItem & { badges?: string[] };
+
+
+    return orders.map((order) => {
+      const updatedOrderItems: OrderItemWithProduct = {
+        ...order.orderItems,
+        badges: productDict[order.orderItems.service].badges || null,
+      };
+     
+      return {
+        ...order,
+        orderItems: updatedOrderItems,
+      };
+    });
   }
+
 
   async createMany(userId: Types.ObjectId, orders: string) {
     if (!orders) throw new BadRequestException("Orders are required");
@@ -500,17 +533,9 @@ export class OrderService {
       if (user.money < totalAmount) {
         throw new BadRequestException("Insufficient balance");
       }
-
+      const moneyOld = user.money
       user.money -= totalAmount;
       await user.save({ session });
-
-      await this.historyService.createHistory(
-        userId.toString(),
-        MethodPay.HANDLE,
-        totalAmount,
-        `Bulk order placed by user ${userId}`
-      );
-
       // Tạo và lưu tất cả các đơn hàng
       const orderPromises = [];
       for (const [index, orderItems] of allOrderItems.entries()) {
@@ -519,6 +544,14 @@ export class OrderService {
 
         // Cập nhật orderItems với thông tin mới
         const updatedOrderItems = { ...orderItems, order: index };
+
+        await this.historyService.createHistory(
+          userId.toString(),
+          MethodPay.HANDLE,
+          totalAmount,
+          moneyOld,
+          `Add order - ${index}`,
+        );
 
         // Tạo đối tượng đơn hàng mới
         const newOrder = new this.ordersModel({
@@ -546,6 +579,4 @@ export class OrderService {
       throw error;
     }
   }
-
-
 }

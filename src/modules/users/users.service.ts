@@ -15,7 +15,7 @@ import { comparePassword, hashPassword } from 'src/utils/hashPassword.util';
 import { LoginDto } from './dto/login/login-user.dto';
 import { AuthService, LoginResponse } from 'src/guards/auth.service';
 import { HistoryService } from '../history/history.service';
-import { MethodPay } from 'src/types/enum';
+import { MethodPay, TypeHistory } from 'src/types/enum';
 import { MailService } from '../mail/mail.service';
 import { HistoryLoginService } from '../historyLogin/history-login.service';
 
@@ -118,6 +118,7 @@ export class UsersService {
 
     if (!user) throw new Error('Userid not exists');
 
+    const moneyOld = user.money
     user.money += amount;
 
     await user.save();
@@ -126,7 +127,9 @@ export class UsersService {
       usedId,
       MethodPay.HANDLE,
       amount,
-      `Add money to ${usedId}`,
+      moneyOld,
+      `DEPOSIT`,
+      TypeHistory.addMoney
     );
     return user;
   }

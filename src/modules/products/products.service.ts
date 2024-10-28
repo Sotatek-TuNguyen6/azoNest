@@ -33,76 +33,97 @@ export class ProductService {
     origin: OriginWeb,
     platform: Types.ObjectId,
   ): Promise<Products[]> {
-    this.logger.log(`Starting import for origin: ${origin}`);
+    try {
+      this.logger.log(`Starting import for origin: ${origin}`);
 
-    let data: Data;
-    switch (origin) {
-      case OriginWeb.AZO:
-        data = {
-          key: this.configService.get<string>('AZO_KEY'),
-          action: Action.services,
-        };
-        break;
-      case OriginWeb.DG1:
-        data = {
-          key: this.configService.get<string>('DG1_KEY'),
-          action: Action.services,
-        };
-        break;
-      default:
-        this.logger.warn('Unsupported origin');
-        throw new Error('Unsupported origin');
-    }
+      const findPlatform = await this.platformService.getById(platform)
 
-    const urlEncodedData = new URLSearchParams();
-    urlEncodedData.append('key', data.key);
-    urlEncodedData.append('action', data.action);
+      if (!findPlatform) throw new BadRequestException("Platform not found");
+      let data: Data = {
+        key: findPlatform.apikey,
+        action: Action.services,
+      };;
+      // switch (origin) {
+      //   case OriginWeb.AZO:
+      //     data = {
+      //       key: this.configService.get<string>('AZO_KEY'),
+      //       action: Action.services,
+      //     };
+      //     break;
+      //   case OriginWeb.DG1:
+      //     data = {
+      //       key: this.configService.get<string>('DG1_KEY'),
+      //       action: Action.services,
+      //     };
+      //     break;
+      //   default:
+      //     this.logger.warn('Unsupported origin');
+      //     throw new Error('Unsupported origin');
+      // }
 
-    const findPlatform = await this.platformService.getById(platform)
+      const urlEncodedData = new URLSearchParams();
+      urlEncodedData.append('key', data.key);
+      urlEncodedData.append('action', data.action);
 
-    if (!findPlatform) throw new BadRequestException("Platform not found");
+      const url = findPlatform.url
 
-    const url = findPlatform.url
+      const response = await axios.post(url, urlEncodedData, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
+      console.log("🚀 ~ ProductService ~ response:", response)
 
-    const response = await axios.post(url, urlEncodedData, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    });
+      if (Array.isArray(response.data)) {
+        const filteredData: ResponeService[] =
+          origin === OriginWeb.DG1
+            ? response.data.filter(
+              (item: ResponeService) => item.platform === 'Youtube',
+            )
+            : response.data;
 
-    if (Array.isArray(response.data)) {
-      const filteredData: ResponeService[] =
-        origin === OriginWeb.DG1
-          ? response.data.filter(
-            (item: ResponeService) => item.platform === 'Youtube',
-          )
-          : response.data;
+        const badges = ["Exclusive", "Owner", "Provider Direct", "Best Seller", "Promotion",
+          "Recommendation", "Instant", "Super Fast", "Real", "30 days Refill"]
 
-      const createdProducts = await Promise.all(
-        filteredData.map(async (item) => {
-          const createdProduct = new this.productsModel({
-            value: item.service,
-            label: item.name,
-            origin,
-            min: item.min,
-            max: item.max,
-            rate: item.rate,
-            refill: item.refill,
-            originPlatform: platform,
-            platform: "Youtube",
-            category: OriginWeb.DG1 === origin ? item.category : "Youtube | 4000H Watchtime"
-          });
+        const createdProducts = await Promise.all(
+          filteredData.map(async (item) => {
+            const randomBadgeCount = Math.floor(Math.random() * 9) + 1;
 
-          // Lưu sản phẩm vào cơ sở dữ liệu
-          await createdProduct.save();
+            // Chọn ngẫu nhiên các badge từ mảng badges
+            const randomBadges = [];
+            for (let i = 0; i < randomBadgeCount; i++) {
+              const badge = badges[Math.floor(Math.random() * badges.length)];
+              if (!randomBadges.includes(badge)) { // Đảm bảo không có badge trùng lặp
+                randomBadges.push(badge);
+              }
+            }
 
-          return createdProduct; // Trả về sản phẩm đã tạo
-        }),
-      );
-      this.logger.log('Update success!!');
-      return createdProducts; // Trả về danh sách sản phẩm đã tạo
-    } else {
-      throw new Error('Unexpected response format');
+            const createdProduct = new this.productsModel({
+              value: item.service,
+              label: item.name,
+              origin,
+              min: item.min,
+              max: item.max,
+              rate: item.rate,
+              refill: item.refill,
+              originPlatform: platform,
+              platform: "Youtube",
+              category: OriginWeb.DG1 === origin ? item.category : "Youtube | 4000H Watchtime",
+              badges: randomBadges
+            });
+
+            // Lưu sản phẩm vào cơ sở dữ liệu
+            await createdProduct.save();
+
+            return createdProduct; // Trả về sản phẩm đã tạo
+          }),
+        );
+        this.logger.log('Update success!!');
+        return createdProducts; // Trả về danh sách sản phẩm đã tạo
+      }
+    } catch (error) {
+      this.logger.debug(error)
+      throw error
     }
   }
 
