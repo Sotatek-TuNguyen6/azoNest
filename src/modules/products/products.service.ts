@@ -72,7 +72,6 @@ export class ProductService {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       });
-      console.log("🚀 ~ ProductService ~ response:", response)
 
       if (Array.isArray(response.data)) {
         const filteredData: ResponeService[] =

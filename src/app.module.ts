@@ -39,6 +39,10 @@ import { MailModule } from './modules/mail/mail.module';
 import { HistoryLoginModule } from './modules/historyLogin/history-login.module';
 import { HistoryLoginController } from './modules/historyLogin/history-login.controller';
 import { HistoryLoginService } from './modules/historyLogin/history-login.service';
+import { RefillModule } from './modules/refill/refill.module';
+import { RefillController } from './modules/refill/refill.controller';
+import { RefillService } from './modules/refill/refill.service';
+import { AuthService } from './guards/auth.service';
 
 @Module({
   imports: [
@@ -67,34 +71,11 @@ import { HistoryLoginService } from './modules/historyLogin/history-login.servic
     ApiDocsModule,
     RedisModule,
     HistoryLoginModule,
-    MailModule
+    MailModule,
+    RefillModule,
   ],
-  controllers: [
-    AppController,
-    UsersController,
-    ProductController,
-    OrderController,
-    PlatformController,
-    HistoryController,
-    ReportAdminController,
-    ReportController,
-    ApiDocsController,
-    HistoryLoginController
-  ],
-  providers: [
-    AppService,
-    UsersService,
-    ProductService,
-    OrderService,
-    CustomLoggerService,
-    TasksService,
-    PlatformsService,
-    HistoryService,
-    ReportService,
-    ReportAdminService,
-    ApiDocService,
-    HistoryLoginService
-  ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}
 

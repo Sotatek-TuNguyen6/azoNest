@@ -9,10 +9,9 @@ export class TasksService {
   private readonly logger = new Logger(TasksService.name);
   //   private readonly
 
-  @Cron('*/5 * * * *')
+  @Cron('*/2 * * * *')
   async handleCron() {
-    this.logger.log("aaaa")
-    // await this.orderService.informationOrder(OriginWeb.AZO);
-    // await this.orderService.informationOrder(OriginWeb.DG1);
+    await this.orderService.informationOrder(OriginWeb.AZO);
+    await this.orderService.informationOrder(OriginWeb.DG1);
   }
 }

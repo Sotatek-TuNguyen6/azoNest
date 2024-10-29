@@ -72,9 +72,8 @@ export class UsersService {
       if (isMatch) {
         throw new BadRequestException('New password cannot be the same as the old password');
       }
+      updateUserDto.password = await hashPassword(updateUserDto.password)
     }
-
-    updateUserDto.password = await hashPassword(updateUserDto.password)
 
     user.tokenVersion += 1;
 
@@ -167,7 +166,6 @@ export class UsersService {
       });
       return true;
     } catch (error) {
-      console.log("🚀 ~ UsersService ~ forgotPassword ~ error:", error)
       throw new Error("Error reset password")
     }
   }

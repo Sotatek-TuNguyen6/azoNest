@@ -56,7 +56,10 @@ export class HistoryService {
     return this.historyModel.find().exec();
   }
 
-  async getByUser(userId: Types.ObjectId): Promise<History[]> {
-    return this.historyModel.find({ user: userId })
+  async getByUser(userId: Types.ObjectId, type?: TypeHistory): Promise<History[]> {
+    if(type){
+      return await this.historyModel.find({user: userId, type})
+    }
+    return await this.historyModel.find({ user: userId })
   }
 }

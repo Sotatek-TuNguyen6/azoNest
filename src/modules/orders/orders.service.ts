@@ -8,7 +8,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Orders, OrdersDocument } from './schemas/orders.schema';
+import { Orders } from './schemas/orders.schema';
 import { ClientSession, Model, Types } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -27,8 +27,6 @@ import { ProductService } from '../products/products.service';
 import { User } from '../users/schemas/user.schema';
 import { HistoryService } from '../history/history.service';
 import { PlatformsService } from '../platforms/platforms.service';
-import { use } from 'passport';
-
 
 interface PayloadOrder {
   action: Action;
@@ -86,8 +84,11 @@ export class OrderService {
         },
       });
 
-      if (response.data || !response.data.order)
+      // this.logger.debug(response)
+
+      if (!response.data || !response.data.order) {
         throw new Error('Create order fail');
+      }
 
       const responseData = response.data;
       return responseData
@@ -384,7 +385,6 @@ export class OrderService {
       return true;
     } catch (error) {
       // Abort transaction nếu có lỗi
-      console.log('🚀 ~ OrderService ~ error:', error);
       await session.abortTransaction();
       session.endSession();
       throw new InternalServerErrorException('Failed to create order');
@@ -432,7 +432,6 @@ export class OrderService {
         };
       });
     } catch (error) {
-      console.log('🚀 ~ OrderService ~ getOrders ~ error:', error);
       throw new InternalServerErrorException('Failed to get orders');
     }
   }
@@ -453,7 +452,7 @@ export class OrderService {
       acc[product.value] = product;
       return acc;
     }, {} as Record<string, typeof products[0]>);
-    this.logger.debug(productDict)
+
     const orders = await this.ordersModel.find({ user: userId }).lean();
 
     type OrderItemWithProduct = OrderItem & { badges?: string[] };
@@ -464,14 +463,13 @@ export class OrderService {
         ...order.orderItems,
         badges: productDict[order.orderItems.service].badges || null,
       };
-     
+
       return {
         ...order,
         orderItems: updatedOrderItems,
       };
     });
   }
-
 
   async createMany(userId: Types.ObjectId, orders: string) {
     if (!orders) throw new BadRequestException("Orders are required");
@@ -540,17 +538,17 @@ export class OrderService {
       const orderPromises = [];
       for (const [index, orderItems] of allOrderItems.entries()) {
         // Gọi hàm sendOrder và chờ kết quả
-        // const result = await this.sendOrder(arrayLink[index], arrayKey[index], orderItems);
+        const result = await this.sendOrder(arrayLink[index], arrayKey[index], orderItems);
 
         // Cập nhật orderItems với thông tin mới
-        const updatedOrderItems = { ...orderItems, order: index };
+        const updatedOrderItems = { ...orderItems, order: result.order };
 
         await this.historyService.createHistory(
           userId.toString(),
           MethodPay.HANDLE,
           totalAmount,
           moneyOld,
-          `Add order - ${index}`,
+          `Add order - ${result.order}`,
         );
 
         // Tạo đối tượng đơn hàng mới
@@ -578,5 +576,9 @@ export class OrderService {
       this.logger.error("Transaction failed:", error);
       throw error;
     }
+  }
+
+  async getDetail(ids: Types.ObjectId[]) {
+    return await this.ordersModel.find({ _id: { $in: ids } });
   }
 }

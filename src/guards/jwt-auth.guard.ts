@@ -10,6 +10,11 @@ import { AuthGuard } from '@nestjs/passport';
 import { Reflector } from '@nestjs/core';
 import { Role } from 'src/types/enum';
 import Redis from 'ioredis';
+import { UsersService } from 'src/modules/users/users.service';
+import { CustomRequest } from 'src/common/interfaces/custom-request.interface';
+import { Model } from 'mongoose';
+import { User } from 'src/modules/users/schemas/user.schema';
+import { InjectModel } from '@nestjs/mongoose';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
@@ -18,11 +23,11 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   constructor(
     private reflector: Reflector,
     @Inject('REDIS_CLIENT') private readonly redisClient: Redis,
+    @InjectModel(User.name) private userModel: Model<User>,
   ) {
     super();
   }
 
-  // Override canActivate to handle async logic
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const canActivate = (await super.canActivate(context)) as boolean;
 
@@ -30,20 +35,19 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       return false;
     }
 
-    const request = context.switchToHttp().getRequest();
+    const request: CustomRequest = context.switchToHttp().getRequest();
     const user = request.user;
+    const tokenVersionInUser = await this.userModel.findOne({ _id: user.userId });
     const ip = request.ip;
     const url = request.url;
 
-    // Perform Redis token version check
     try {
       const storedTokenVersion = await this.redisClient.get(
         `user-token-version-${user.userId}`,
       );
-
       if (
         !storedTokenVersion ||
-        Number(storedTokenVersion) !== user.tokenVersion
+        Number(storedTokenVersion) !== tokenVersionInUser.tokenVersion
       ) {
         this.logger.warn(
           `Invalid token - IP: ${ip}, URL: ${url}, UserID: ${user.userId}`,
@@ -51,7 +55,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
         throw new UnauthorizedException('Token is no longer valid');
       }
     } catch (error) {
-      this.logger.warn('Error checking token version:', error);
+      this.logger.warn(`Error checking token version:${error}`);
       throw new UnauthorizedException('Token validation failed');
     }
 
@@ -70,7 +74,6 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       throw err || new UnauthorizedException();
     }
 
-    // Role-based access control
     const requiredRoles = this.reflector.get<Role[]>(
       'roles',
       context.getHandler(),
