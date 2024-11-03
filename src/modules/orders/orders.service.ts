@@ -129,6 +129,7 @@ export class OrderService {
               HttpStatus.BAD_REQUEST,
             );
         }
+
         const urlEncodedData = new URLSearchParams();
         urlEncodedData.append('key', payload.key);
         urlEncodedData.append('action', payload.action);
@@ -150,6 +151,10 @@ export class OrderService {
               `Order ID ${orderId} has an error: ${orderStatus.error}`,
             );
             continue;
+          }
+
+          if (Status[orderStatus.status] === Status.Canceled) {
+            const findUser = await this.refundUser(orderId, orderStatus.charge)
           }
 
           await this.ordersModel.findOneAndUpdate(
@@ -175,6 +180,43 @@ export class OrderService {
     }
   }
 
+  async refundUser(orderId: string, orderCharge: number) {
+    try {
+      const findOrder = await this.ordersModel.findOne({
+        'orderItems.order': orderId,
+      });
+
+      if (!findOrder) {
+        this.logger.error(`Order with ID ${orderId} not found.`);
+        throw new Error("Order not found")
+      }
+
+      const userId = findOrder.user;
+      const user = await this.userModel.findOne({ _id: userId })
+      if (!user) throw new Error("User not found");
+      const moneyOld = user.money;
+      const moneyRefund = findOrder.totalPrice - orderCharge;
+
+      await this.userModel.findOneAndUpdate(
+        { _id: userId },
+        { $inc: { money: moneyRefund } }, // Cộng số tiền hoàn lại vào balance của người dùng
+        { new: true }
+      );
+
+      await this.historyService.createHistory(
+        userId.toString(),
+        MethodPay.HANDLE,
+        moneyRefund,
+        moneyOld,
+        `Refund Order - ${orderId}`,
+      );
+
+      this.logger.log(`Refunded ${moneyRefund} for user ID ${userId} related to order ID ${orderId}`);
+
+    } catch (error) {
+      this.logger.error(`Error refunding for order ID ${orderId}: ${error.message}`);
+    }
+  }
   async retryOrder(
     origin: OriginWeb,
     id: string,

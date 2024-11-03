@@ -19,6 +19,7 @@ import { Role, StatusEnum } from 'src/types/enum';
 import { UpdateProductDto } from './dto/update/update-product.dto';
 import { Roles } from 'src/decorator/roles.decorator';
 import { PlatformsService } from '../platforms/platforms.service';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('products')
 export class ProductController {
@@ -56,6 +57,7 @@ export class ProductController {
     }
   }
 
+  // @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Get()
   async getProduct() {
     try {

@@ -15,7 +15,7 @@ import { comparePassword, hashPassword } from 'src/utils/hashPassword.util';
 import { LoginDto } from './dto/login/login-user.dto';
 import { AuthService, LoginResponse } from 'src/guards/auth.service';
 import { HistoryService } from '../history/history.service';
-import { MethodPay, TypeHistory } from 'src/types/enum';
+import { MethodPay, Role, TypeHistory } from 'src/types/enum';
 import { MailService } from '../mail/mail.service';
 import { HistoryLoginService } from '../historyLogin/history-login.service';
 
@@ -105,6 +105,23 @@ export class UsersService {
     }
 
     await this.historyLoginService.createLoginHistory(user._id, ip, userAgent, true)
+
+    return this.authService.login(user);
+  }
+
+  async loginByAdmin(loginDto: LoginDto): Promise<LoginResponse> {
+    const { email, password } = loginDto;
+    const user = await this.userModel.findOne({ email });
+    if (!user) {
+      throw new BadRequestException('Invalid password or email');
+    }
+
+    if(user.role !== Role.admin) throw new ForbiddenException("User not admin")
+
+    const isPasswordValid = await comparePassword(password, user.password);
+    if (!isPasswordValid) {
+      throw new BadRequestException('Invalid password or email');
+    }
 
     return this.authService.login(user);
   }

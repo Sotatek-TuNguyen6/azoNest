@@ -86,6 +86,38 @@ export class UsersController {
     }
   }
 
+  @Post('/loginadmin')
+  @HttpCode(HttpStatus.OK)
+  async loginAdmin(@Body() loginDto: LoginDto) {
+    try {
+      const accessToken = await this.usersService.loginByAdmin(loginDto);
+      return new CommonResponse(
+        StatusEnum.SUCCESS,
+        'Login successful',
+        accessToken,
+      );
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw new HttpException(
+          {
+            status: StatusEnum.ERROR,
+            message: error.message,
+            error: error.message,
+          },
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      throw new HttpException(
+        {
+          status: StatusEnum.ERROR,
+          message: 'Failed to login user',
+          error: error.message,
+        },
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   // @UseGuards(JwtAuthGuard)
   // @Roles(Role.admin)
   @Get()
@@ -301,4 +333,6 @@ export class UsersController {
       );
     }
   }
+
+
 }
