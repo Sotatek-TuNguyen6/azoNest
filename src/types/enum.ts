@@ -65,8 +65,13 @@ export enum MethodPay {
   BANK = 'bank',
 }
 
-
 export enum TypeHistory {
   addMoney = "addMoney",
   order = "order"
+}
+
+export enum StatusInvoice {
+  processing = "processing",
+  completed = "completed",
+  cancelled = "cancelled"
 }

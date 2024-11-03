@@ -20,8 +20,10 @@ import { ApiDocsModule } from './modules/apidocs/apidocs.module';
 import { MailModule } from './modules/mail/mail.module';
 import { HistoryLoginModule } from './modules/historyLogin/history-login.module';
 import { RefillModule } from './modules/refill/refill.module';
+import { DepositModule } from './modules/deposit/deposit.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { GlobalRateLimiterMiddleware } from './middleware/rate.middleware';
+import { InvoiceModule } from './modules/invoice/invoice.module';
 
 @Module({
   imports: [
@@ -56,6 +58,8 @@ import { GlobalRateLimiterMiddleware } from './middleware/rate.middleware';
     HistoryLoginModule,
     MailModule,
     RefillModule,
+    InvoiceModule,
+    DepositModule,
   ],
   controllers: [AppController],
   providers: [AppService],
