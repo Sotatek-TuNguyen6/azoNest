@@ -58,6 +58,10 @@ export class InvoiceService {
     return `This action returns a #${id} invoice`;
   }
 
+  async findByTrans(trans_id: string) {
+    return await this.invoiceModel.findOne({ trans_id })
+  }
+
   update(id: number, updateInvoiceDto: UpdateInvoiceDto) {
     return `This action updates a #${id} invoice`;
   }
@@ -148,7 +152,7 @@ export class InvoiceService {
               url_payment: paymentData.url_payment
             }
           };
-        
+
           await this.create(dataInvoice, session);
           await session.commitTransaction();
           return paymentData.url_payment;

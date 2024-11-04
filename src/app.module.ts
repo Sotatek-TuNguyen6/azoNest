@@ -24,6 +24,7 @@ import { DepositModule } from './modules/deposit/deposit.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { GlobalRateLimiterMiddleware } from './middleware/rate.middleware';
 import { InvoiceModule } from './modules/invoice/invoice.module';
+import { PaypalModule } from './modules/paypal/paypal.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { InvoiceModule } from './modules/invoice/invoice.module';
     RefillModule,
     InvoiceModule,
     DepositModule,
+    PaypalModule
   ],
   controllers: [AppController],
   providers: [AppService],

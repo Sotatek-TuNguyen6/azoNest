@@ -176,4 +176,8 @@ export class DepositService {
       throw error;
     }
   }
+
+  async findByName(name: string): Promise<Deposit> {
+    return await this.depositModel.findOne({ name })
+  }
 }
