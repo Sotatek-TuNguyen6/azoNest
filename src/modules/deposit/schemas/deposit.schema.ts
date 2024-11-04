@@ -13,6 +13,9 @@ export class Deposit {
 
     @Prop()
     key: string;
+
+    @Prop({ default: true })
+    active: boolean
 }
 
 export const DepositSchema = SchemaFactory.createForClass(Deposit);

@@ -23,13 +23,15 @@ export class HistoryService {
    * const history = await this.historyService.createHistory('123456', MethodPay.CREDIT_CARD, 500, 'Payment for order #5678');
    * console.log(history);
    */
+  
   async createHistory(
     userId: string | Types.ObjectId,
     method: MethodPay,
     amount: number,
     amountOld: number,
-    description: string,  
+    description: string,
     type?: TypeHistory,
+    session?: any 
   ): Promise<History> {
     const newHistory = new this.historyModel({
       user: userId,
@@ -39,6 +41,10 @@ export class HistoryService {
       description,
       type
     });
+
+    if (session) {
+      return await newHistory.save({ session });
+    }
 
     return await newHistory.save();
   }

@@ -28,6 +28,12 @@ export class Invoice {
 
     @Prop()
     description: string
+
+    @Prop()
+    trans_id: string
+
+    @Prop({ type: Object })
+    payment_details: Record<string, any>;
 }
 
 export const InvoiceSchema = SchemaFactory.createForClass(Invoice);

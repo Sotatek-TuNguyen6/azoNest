@@ -1,5 +1,5 @@
 // create-invoice.dto.ts
-import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsMongoId } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsMongoId } from 'class-validator';
 import { StatusInvoice } from "src/types/enum";
 import { Types } from 'mongoose';
 
@@ -22,7 +22,7 @@ export class CreateInvoiceDto {
 
   @IsMongoId()
   @IsNotEmpty()
-  user_id: Types.ObjectId;
+  user_id: Types.ObjectId | string;
 
   @IsString()
   @IsOptional() // Optional because we set a default value
@@ -35,4 +35,12 @@ export class CreateInvoiceDto {
   @IsString()
   @IsOptional()
   description?: string;
+
+  @IsString()
+  @IsOptional()
+  trans_id?: string;
+
+  @IsOptional()
+  @IsObject()
+  payment_details?: Record<string, any>;
 }

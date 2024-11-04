@@ -116,7 +116,7 @@ export class UsersService {
       throw new BadRequestException('Invalid password or email');
     }
 
-    if(user.role !== Role.admin) throw new ForbiddenException("User not admin")
+    if (user.role !== Role.admin) throw new ForbiddenException("User not admin")
 
     const isPasswordValid = await comparePassword(password, user.password);
     if (!isPasswordValid) {
@@ -127,26 +127,31 @@ export class UsersService {
   }
 
   async addMoneyByAdmin(
-    usedId: string | Types.ObjectId,
+    userId: string | Types.ObjectId,
     amount: number,
+    session?: any,
+    methodPay?: MethodPay
   ): Promise<User> {
-    const user = await this.userModel.findById(usedId);
+    const user = await this.userModel.findById(userId).session(session);
 
-    if (!user) throw new Error('Userid not exists');
+    if (!user) throw new Error('User ID does not exist');
 
-    const moneyOld = user.money
+    const moneyOld = user.money;
+
     user.money += amount;
 
-    await user.save();
+    await user.save({ session });
 
     await this.historyService.createHistory(
-      usedId,
-      MethodPay.HANDLE,
+      userId,
+      methodPay ? methodPay : MethodPay.HANDLE,
       amount,
       moneyOld,
       `DEPOSIT`,
-      TypeHistory.addMoney
+      TypeHistory.addMoney,
+      session
     );
+
     return user;
   }
 

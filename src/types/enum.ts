@@ -75,3 +75,15 @@ export enum StatusInvoice {
   completed = "completed",
   cancelled = "cancelled"
 }
+
+export enum PayPalEventType {
+  PAYMENT_CAPTURE_COMPLETED = 'PAYMENT.CAPTURE.COMPLETED',
+  PAYMENT_CAPTURE_DECLINED = 'CHECKOUT.ORDER.DECLINED',
+  PAYMENT_CAPTURE_REFUNDED = 'PAYMENT.CAPTURE.REFUNDED',
+  PAYMENT_CAPTURE_DENIED = 'PAYMENT.CAPTURE.DENIED',
+}
+
+export enum ChannelInvoice{
+  BANKING = "banking",
+  FPAYMENT = "fpayment"
+}
