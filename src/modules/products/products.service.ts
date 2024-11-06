@@ -244,6 +244,13 @@ export class ProductService {
     id: string,
     updateProductDto: UpdateProductDto,
   ): Promise<Products> {
+
+    const redisKey = "products";
+    await this.redisClient.del(redisKey);
+    // const redisKey = "groupedProducts";
+
+    // Kiểm tra dữ liệu từ Redis
+    await this.redisClient.del('groupedProducts');
     // Tìm sản phẩm theo ID
     const existingProduct = await this.productsModel.findById(id).exec();
 

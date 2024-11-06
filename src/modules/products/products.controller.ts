@@ -80,6 +80,30 @@ export class ProductController {
     }
   }
 
+  // @UseGuards(JwtAuthGuard)
+  // @Roles(Role.admin)
+  @Get('/getAll')
+  async getAll() {
+    try {
+      const result = await this.productService.getAll();
+
+      return new CommonResponse(
+        StatusEnum.SUCCESS,
+        "Get successfull",
+        result
+      )
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
+          message: 'Failed to import products',
+          error: error.message,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   @Get('/:id')
   async getProductById(@Param('id') id: string) {
     try {
@@ -188,4 +212,6 @@ export class ProductController {
       );
     }
   }
+
+
 }

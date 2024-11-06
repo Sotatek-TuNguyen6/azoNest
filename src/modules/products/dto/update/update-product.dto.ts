@@ -34,17 +34,14 @@ export class UpdateProductDto {
   @IsOptional()
   origin: string;
 
-  @IsInt()
   @Min(0)
   @IsOptional()
   rate: number;
 
-  @IsInt()
   @Min(0)
   @IsOptional()
   min: number;
 
-  @IsInt()
   @Min(0)
   @IsOptional()
   max: number;
