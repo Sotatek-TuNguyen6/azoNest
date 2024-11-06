@@ -11,7 +11,7 @@ export class TasksService {
 
   @Cron('*/2 * * * *')
   async handleCron() {
-    // await this.orderService.informationOrder(OriginWeb.AZO);
-    // await this.orderService.informationOrder(OriginWeb.DG1);
+    await this.orderService.informationOrder(OriginWeb.AZO);
+    await this.orderService.informationOrder(OriginWeb.DG1);
   }
 }

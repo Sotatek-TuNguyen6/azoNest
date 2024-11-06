@@ -31,10 +31,12 @@ import { PaypalModule } from './modules/paypal/paypal.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    ThrottlerModule.forRoot([{
-      ttl: 60000,
-      limit: 10,
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 10,
+      },
+    ]),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -61,16 +63,13 @@ import { PaypalModule } from './modules/paypal/paypal.module';
     RefillModule,
     InvoiceModule,
     DepositModule,
-    PaypalModule
+    PaypalModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(GlobalRateLimiterMiddleware)
-      .forRoutes('*');
+    consumer.apply(GlobalRateLimiterMiddleware).forRoutes('*');
   }
 }
-

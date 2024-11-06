@@ -6,10 +6,10 @@ export type CounterDocument = HydratedDocument<Counter>;
 @Schema()
 export class Counter {
   @Prop({ required: true })
-  id: string;  // Mỗi bộ đếm sẽ có một ID riêng, ví dụ: 'orderCode'
+  id: string; // Mỗi bộ đếm sẽ có một ID riêng, ví dụ: 'orderCode'
 
   @Prop({ required: true })
-  seq: number;  
+  seq: number;
 }
 
 export const CounterSchema = SchemaFactory.createForClass(Counter);

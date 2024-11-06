@@ -1,4 +1,17 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpException, HttpStatus, UseGuards, Req, HttpCode } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  HttpException,
+  HttpStatus,
+  UseGuards,
+  Req,
+  HttpCode,
+} from '@nestjs/common';
 import { DepositService } from './deposit.service';
 import { CreateDepositDto } from './dto/create-deposit.dto';
 import { UpdateDepositDto } from './dto/update-deposit.dto';
@@ -10,7 +23,7 @@ import { PayPalWebhookDto } from './dto/paypal-callback.dto';
 
 @Controller('deposit')
 export class DepositController {
-  constructor(private readonly depositService: DepositService) { }
+  constructor(private readonly depositService: DepositService) {}
 
   @Post()
   create(@Body() createDepositDto: CreateDepositDto) {
@@ -28,17 +41,13 @@ export class DepositController {
   // }
 
   @UseGuards(JwtAuthGuard)
-  @Get("/:name")
+  @Get('/:name')
   async findOne(@Param('name') name: string, @Req() req: CustomRequest) {
     try {
-      const user = req.user
+      const user = req.user;
       const result = await this.depositService.findOne(name, user.userId);
 
-      return new CommonResponse(
-        StatusEnum.SUCCESS,
-        "Get successfull",
-        result
-      )
+      return new CommonResponse(StatusEnum.SUCCESS, 'Get successfull', result);
     } catch (error) {
       throw new HttpException(
         {
@@ -61,16 +70,16 @@ export class DepositController {
     return this.depositService.deleteAll();
   }
 
-  @Post("callbackPaypal")
+  @Post('callbackPaypal')
   @HttpCode(HttpStatus.OK)
   async callBack(@Body() data: PayPalWebhookDto) {
     try {
-      const result = await this.depositService.callbackPaypal(data)
+      const result = await this.depositService.callbackPaypal(data);
       return new CommonResponse(
         StatusEnum.SUCCESS,
-        "Add funds success",
-        result
-      )
+        'Add funds success',
+        result,
+      );
     } catch (error) {
       throw new HttpException(
         {
@@ -81,8 +90,5 @@ export class DepositController {
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
-
   }
-
-
 }

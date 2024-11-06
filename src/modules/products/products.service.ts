@@ -1,4 +1,10 @@
-import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -8,7 +14,6 @@ import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { URLSearchParams } from 'url';
 import { CommonService } from 'src/common/service/common.service';
-import { CustomLoggerService } from 'src/logger/custom-logger.service';
 import { UpdateProductDto } from './dto/update/update-product.dto';
 import { PlatformsService } from '../platforms/platforms.service';
 import Redis from 'ioredis';
@@ -26,8 +31,8 @@ export class ProductService {
     private readonly configService: ConfigService,
     private readonly commonService: CommonService,
     private readonly platformService: PlatformsService,
-  ) { }
-  private readonly logger = new Logger(ProductService.name)
+  ) {}
+  private readonly logger = new Logger(ProductService.name);
 
   async importData(
     origin: OriginWeb,
@@ -36,13 +41,13 @@ export class ProductService {
     try {
       this.logger.log(`Starting import for origin: ${origin}`);
 
-      const findPlatform = await this.platformService.getById(platform)
+      const findPlatform = await this.platformService.getById(platform);
 
-      if (!findPlatform) throw new BadRequestException("Platform not found");
-      let data: Data = {
+      if (!findPlatform) throw new BadRequestException('Platform not found');
+      const data: Data = {
         key: findPlatform.apikey,
         action: Action.services,
-      };;
+      };
       // switch (origin) {
       //   case OriginWeb.AZO:
       //     data = {
@@ -65,7 +70,7 @@ export class ProductService {
       urlEncodedData.append('key', data.key);
       urlEncodedData.append('action', data.action);
 
-      const url = findPlatform.url
+      const url = findPlatform.url;
 
       const response = await axios.post(url, urlEncodedData, {
         headers: {
@@ -77,12 +82,22 @@ export class ProductService {
         const filteredData: ResponeService[] =
           origin === OriginWeb.DG1
             ? response.data.filter(
-              (item: ResponeService) => item.platform === 'Youtube',
-            )
+                (item: ResponeService) => item.platform === 'Youtube',
+              )
             : response.data;
 
-        const badges = ["Exclusive", "Owner", "Provider Direct", "Best Seller", "Promotion",
-          "Recommendation", "Instant", "Super Fast", "Real", "30 days Refill"]
+        const badges = [
+          'Exclusive',
+          'Owner',
+          'Provider Direct',
+          'Best Seller',
+          'Promotion',
+          'Recommendation',
+          'Instant',
+          'Super Fast',
+          'Real',
+          '30 days Refill',
+        ];
 
         const createdProducts = await Promise.all(
           filteredData.map(async (item) => {
@@ -92,7 +107,8 @@ export class ProductService {
             const randomBadges = [];
             for (let i = 0; i < randomBadgeCount; i++) {
               const badge = badges[Math.floor(Math.random() * badges.length)];
-              if (!randomBadges.includes(badge)) { // Đảm bảo không có badge trùng lặp
+              if (!randomBadges.includes(badge)) {
+                // Đảm bảo không có badge trùng lặp
                 randomBadges.push(badge);
               }
             }
@@ -106,9 +122,12 @@ export class ProductService {
               rate: item.rate,
               refill: item.refill,
               originPlatform: platform,
-              platform: "Youtube",
-              category: OriginWeb.DG1 === origin ? item.category : "Youtube | 4000H Watchtime",
-              badges: randomBadges
+              platform: 'Youtube',
+              category:
+                OriginWeb.DG1 === origin
+                  ? item.category
+                  : 'Youtube | 4000H Watchtime',
+              badges: randomBadges,
             });
 
             // Lưu sản phẩm vào cơ sở dữ liệu
@@ -121,8 +140,8 @@ export class ProductService {
         return createdProducts; // Trả về danh sách sản phẩm đã tạo
       }
     } catch (error) {
-      this.logger.debug(error)
-      throw error
+      this.logger.debug(error);
+      throw error;
     }
   }
 
@@ -131,43 +150,46 @@ export class ProductService {
   //   {
   //     $group: {
   //       _id: "$category",
-  //       products: { $push: "$$ROOT" } 
+  //       products: { $push: "$$ROOT" }
   //     }
   //   },
   //   {
-  //     $sort: { _id: 1 } 
+  //     $sort: { _id: 1 }
   //   }
   // ]).exec();
   // }
 
   async getService(): Promise<Products[]> {
-    const redisKey = "groupedProducts";
+    const redisKey = 'groupedProducts';
 
     // Kiểm tra dữ liệu từ Redis
     const cachedData = await this.redisClient.get(redisKey);
     if (cachedData) {
-      this.logger.debug("Data fetched from Redis");
+      this.logger.debug('Data fetched from Redis');
       return JSON.parse(cachedData); // Trả về dữ liệu từ Redis
     }
 
     // Sử dụng aggregate để nhóm sản phẩm theo category
-    const products = await this.productsModel.aggregate([
-      {
-        $group: {
-          _id: "$category",
-          products: { $push: "$$ROOT" },
+    const products = await this.productsModel
+      .aggregate([
+        {
+          $group: {
+            _id: '$category',
+            products: { $push: '$$ROOT' },
+          },
         },
-      },
-      {
-        $sort: { _id: 1 },
-      },
-    ]).exec();
-
+        {
+          $sort: { _id: 1 },
+        },
+      ])
+      .exec();
 
     // Lưu vào Redis với thời gian hết hạn 1 giờ (3600 giây)
     await this.redisClient.set(redisKey, JSON.stringify(products), 'EX', 3600);
 
-    this.logger.debug("Data fetched from database using aggregate and saved to Redis");
+    this.logger.debug(
+      'Data fetched from database using aggregate and saved to Redis',
+    );
 
     return products;
   }
@@ -244,8 +266,7 @@ export class ProductService {
     id: string,
     updateProductDto: UpdateProductDto,
   ): Promise<Products> {
-
-    const redisKey = "products";
+    const redisKey = 'products';
     await this.redisClient.del(redisKey);
     // const redisKey = "groupedProducts";
 
@@ -276,27 +297,32 @@ export class ProductService {
   }
 
   async removeAll() {
-    return this.productsModel.deleteMany({})
+    return this.productsModel.deleteMany({});
   }
 
   async getAll(): Promise<Products[]> {
     try {
-      const redisKey = "products";
+      const redisKey = 'products';
       const cachedData = await this.redisClient.get(redisKey);
 
       if (cachedData) {
-        this.logger.debug("Data fetched from Redis");
+        this.logger.debug('Data fetched from Redis');
         return JSON.parse(cachedData);
       }
 
-      const products = await this.productsModel.find()
+      const products = await this.productsModel.find();
 
-      await this.redisClient.set(redisKey, JSON.stringify(products), 'EX', 3600);
+      await this.redisClient.set(
+        redisKey,
+        JSON.stringify(products),
+        'EX',
+        3600,
+      );
 
       return products;
     } catch (error) {
-      this.logger.error("🚀 ~ ProductService ~ getAll ~ error:", error)
-      throw error
+      this.logger.error('🚀 ~ ProductService ~ getAll ~ error:', error);
+      throw error;
     }
   }
 }

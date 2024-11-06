@@ -13,7 +13,10 @@ import { Counter, CounterSchema } from './schemas/counter.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Orders.name, schema: OrdersSchema }, { name: Counter.name, schema: CounterSchema },]),
+    MongooseModule.forFeature([
+      { name: Orders.name, schema: OrdersSchema },
+      { name: Counter.name, schema: CounterSchema },
+    ]),
     CommonModule,
     UsersModule,
     ProductsModule,
@@ -24,4 +27,4 @@ import { Counter, CounterSchema } from './schemas/counter.schema';
   providers: [OrderServiceInit, OrderService],
   exports: [MongooseModule, OrderService],
 })
-export class OrdersModule { }
+export class OrdersModule {}

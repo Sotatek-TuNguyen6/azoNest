@@ -1,12 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { HistoryLogin, HistoryLoginDocument } from './schemas/historyLogin.schema';
+import {
+  HistoryLogin,
+  HistoryLoginDocument,
+} from './schemas/historyLogin.schema';
 
 @Injectable()
 export class HistoryLoginService {
   constructor(
-    @InjectModel(HistoryLogin.name) private historyLoginModel: Model<HistoryLoginDocument>,
+    @InjectModel(HistoryLogin.name)
+    private historyLoginModel: Model<HistoryLoginDocument>,
   ) {}
 
   async createLoginHistory(
@@ -22,16 +26,26 @@ export class HistoryLoginService {
       deviceInfo,
       isSuccessful,
     });
-    
+
     return loginHistory.save();
   }
 
-  async findLoginHistoryByUserId(userId: Types.ObjectId): Promise<HistoryLogin[]> {
-    return this.historyLoginModel.find({ userId }).sort({ loginTime: -1 }).exec();
+  async findLoginHistoryByUserId(
+    userId: Types.ObjectId,
+  ): Promise<HistoryLogin[]> {
+    return this.historyLoginModel
+      .find({ userId })
+      .sort({ loginTime: -1 })
+      .exec();
   }
 
-  async findLoginHistoryByIpAddress(ipAddress: string): Promise<HistoryLogin[]> {
-    return this.historyLoginModel.find({ ipAddress }).sort({ loginTime: -1 }).exec();
+  async findLoginHistoryByIpAddress(
+    ipAddress: string,
+  ): Promise<HistoryLogin[]> {
+    return this.historyLoginModel
+      .find({ ipAddress })
+      .sort({ loginTime: -1 })
+      .exec();
   }
 
   async deleteLoginHistoryById(historyId: string): Promise<HistoryLogin> {
@@ -42,7 +56,7 @@ export class HistoryLoginService {
     return this.historyLoginModel.deleteMany({ userId }).exec();
   }
 
-  async findAll(): Promise<HistoryLogin[]>{
-    return this.historyLoginModel.find()
+  async findAll(): Promise<HistoryLogin[]> {
+    return this.historyLoginModel.find();
   }
 }

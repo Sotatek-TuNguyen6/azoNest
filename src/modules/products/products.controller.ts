@@ -19,14 +19,13 @@ import { Role, StatusEnum } from 'src/types/enum';
 import { UpdateProductDto } from './dto/update/update-product.dto';
 import { Roles } from 'src/decorator/roles.decorator';
 import { PlatformsService } from '../platforms/platforms.service';
-import { Throttle } from '@nestjs/throttler';
 
 @Controller('products')
 export class ProductController {
   constructor(
     private readonly productService: ProductService,
     private readonly platFormService: PlatformsService,
-  ) { }
+  ) {}
 
   // @UseGuards(JwtAuthGuard)
   // @Roles(Role.admin)
@@ -67,7 +66,6 @@ export class ProductController {
         'Fetched products successfully',
         products,
       );
-
     } catch (error) {
       throw new HttpException(
         {
@@ -87,11 +85,7 @@ export class ProductController {
     try {
       const result = await this.productService.getAll();
 
-      return new CommonResponse(
-        StatusEnum.SUCCESS,
-        "Get successfull",
-        result
-      )
+      return new CommonResponse(StatusEnum.SUCCESS, 'Get successfull', result);
     } catch (error) {
       throw new HttpException(
         {
@@ -192,15 +186,12 @@ export class ProductController {
     }
   }
 
-  @Post("/removeAll")
+  @Post('/removeAll')
   async removeAll() {
     try {
-      await this.productService.removeAll()
+      await this.productService.removeAll();
 
-      return new CommonResponse(
-        StatusEnum.SUCCESS,
-        "Remove successful!"
-      )
+      return new CommonResponse(StatusEnum.SUCCESS, 'Remove successful!');
     } catch (error) {
       throw new HttpException(
         {
@@ -212,6 +203,4 @@ export class ProductController {
       );
     }
   }
-
-
 }

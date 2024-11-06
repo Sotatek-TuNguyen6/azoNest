@@ -6,6 +6,6 @@ export class CreateDepositDto {
   name: string;
 
   @IsOptional()
-  @IsObject()  
+  @IsObject()
   value?: Record<string, any>;
 }

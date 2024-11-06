@@ -4,7 +4,6 @@ import {
   Post,
   Body,
   Patch,
-  Param,
   HttpCode,
   HttpStatus,
   UseGuards,
@@ -31,8 +30,8 @@ import { UserValidate } from 'src/guards/jwt.strategy';
 @SkipThrottle()
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
-  private readonly logger = new Logger()
+  constructor(private readonly usersService: UsersService) {}
+  private readonly logger = new Logger();
   @Post()
   async create(@Body() createUserDto: CreateUserDto) {
     try {
@@ -56,9 +55,17 @@ export class UsersController {
 
   @Post('/login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() loginDto: LoginDto, @Ip() ip: string, @Headers('User-Agent') userAgent: string) {
+  async login(
+    @Body() loginDto: LoginDto,
+    @Ip() ip: string,
+    @Headers('User-Agent') userAgent: string,
+  ) {
     try {
-      const accessToken = await this.usersService.login(loginDto, ip, userAgent);
+      const accessToken = await this.usersService.login(
+        loginDto,
+        ip,
+        userAgent,
+      );
       return new CommonResponse(
         StatusEnum.SUCCESS,
         'Login successful',
@@ -175,17 +182,12 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Get('/detail')
-  async findOne(@Req() req: CustomRequest,
-  ) {
+  async findOne(@Req() req: CustomRequest) {
     try {
       const user: UserValidate = req.user;
       const result = await this.usersService.findOne(user.userId);
 
-      return new CommonResponse(
-        StatusEnum.SUCCESS,
-        "Get successful",
-        result
-      )
+      return new CommonResponse(StatusEnum.SUCCESS, 'Get successful', result);
     } catch (error) {
       if (error instanceof BadRequestException) {
         throw new HttpException(
@@ -210,19 +212,19 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Patch()
-  async update(@Body() updateUserDto: UpdateUserDto, @Req() req: CustomRequest) {
+  async update(
+    @Body() updateUserDto: UpdateUserDto,
+    @Req() req: CustomRequest,
+  ) {
     try {
-      const user = req.user
+      const user = req.user;
 
       if (updateUserDto.role && user.role !== Role.admin) {
         throw new ForbiddenException('User is not admin');
       }
 
-      await this.usersService.update(user.userId, updateUserDto)
-      return new CommonResponse(
-        StatusEnum.SUCCESS,
-        'Update successs',
-      );
+      await this.usersService.update(user.userId, updateUserDto);
+      return new CommonResponse(StatusEnum.SUCCESS, 'Update successs');
     } catch (error) {
       if (error instanceof BadRequestException) {
         throw new HttpException(
@@ -243,7 +245,6 @@ export class UsersController {
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
-
   }
 
   @SkipThrottle({ default: false })
@@ -292,11 +293,11 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post("/logout")
+  @Post('/logout')
   async logout(@Req() req: CustomRequest) {
-    const user = req.user
-    await this.usersService.logout(user.userId)
-    return true
+    const user = req.user;
+    await this.usersService.logout(user.userId);
+    return true;
   }
   // @Delete(':id')
   // remove(@Param('id') id: string) {
@@ -304,19 +305,19 @@ export class UsersController {
   // }
 
   @UseGuards(JwtAuthGuard)
-  @Post("/updateApiKey")
+  @Post('/updateApiKey')
   async updateAPiKey(@Req() req: CustomRequest) {
     try {
-      const user = req.user
+      const user = req.user;
 
       const result = await this.usersService.changeApiKey(user.userId);
       return new CommonResponse(
         StatusEnum.SUCCESS,
         'Update ApiKey successfull',
-        result
+        result,
       );
     } catch (error) {
-      this.logger.error(error)
+      this.logger.error(error);
       const statusCode = error.status || HttpStatus.INTERNAL_SERVER_ERROR;
       const message =
         statusCode === HttpStatus.INTERNAL_SERVER_ERROR
@@ -329,10 +330,8 @@ export class UsersController {
           message: message,
           error: error.message,
         },
-        statusCode
+        statusCode,
       );
     }
   }
-
-
 }

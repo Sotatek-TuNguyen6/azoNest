@@ -10,8 +10,7 @@ import { UsersModule } from '../users/users.module';
     MongooseModule.forFeature([
       { name: Platform.name, schema: PlatformSchema },
     ]),
-    forwardRef(() => UsersModule), 
-
+    forwardRef(() => UsersModule),
   ],
   controllers: [PlatformController],
   providers: [PlatformsService],

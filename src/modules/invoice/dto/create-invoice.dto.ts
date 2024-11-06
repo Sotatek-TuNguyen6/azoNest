@@ -1,6 +1,14 @@
 // create-invoice.dto.ts
-import { IsEnum, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsMongoId } from 'class-validator';
-import { StatusInvoice } from "src/types/enum";
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsObject,
+  IsOptional,
+  IsString,
+  IsMongoId,
+} from 'class-validator';
+import { StatusInvoice } from 'src/types/enum';
 import { Types } from 'mongoose';
 
 export class CreateInvoiceDto {

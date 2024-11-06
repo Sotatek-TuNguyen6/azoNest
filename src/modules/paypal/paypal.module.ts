@@ -11,10 +11,10 @@ import { MongooseModule } from '@nestjs/mongoose';
     MongooseModule,
     DepositModule,
     forwardRef(() => UsersModule),
-    InvoiceModule
+    InvoiceModule,
   ],
   controllers: [PaypalController],
   providers: [PaypalService],
-  exports: [PaypalService]
+  exports: [PaypalService],
 })
-export class PaypalModule { }
+export class PaypalModule {}

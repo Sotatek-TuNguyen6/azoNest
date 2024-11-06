@@ -1,4 +1,14 @@
-import { BadRequestException, Body, Controller, Get, HttpException, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { OrderService } from './orders.service';
 import { OrderItemDto } from './dto/create/order-item.dto';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
@@ -9,7 +19,7 @@ import { StatusEnum } from 'src/types/enum';
 
 @Controller('orders')
 export class OrderController {
-  constructor(private readonly orderService: OrderService) { }
+  constructor(private readonly orderService: OrderService) {}
 
   @UseGuards(JwtAuthGuard)
   @Post()
@@ -21,10 +31,7 @@ export class OrderController {
       const user: UserValidate = req.user;
 
       await this.orderService.createOrder(orderItemDto, user.userId);
-      return new CommonResponse(
-        StatusEnum.SUCCESS,
-        "Created successfull"
-      )
+      return new CommonResponse(StatusEnum.SUCCESS, 'Created successfull');
     } catch (error: any) {
       if (error instanceof BadRequestException) {
         throw new HttpException(
@@ -52,12 +59,8 @@ export class OrderController {
   async getOrder(@Req() req: CustomRequest) {
     try {
       const user: UserValidate = req.user;
-      const result = await this.orderService.getAllOrderByUser(user.userId)
-      return new CommonResponse(
-        StatusEnum.SUCCESS,
-        "Get successfull",
-        result
-      )
+      const result = await this.orderService.getAllOrderByUser(user.userId);
+      return new CommonResponse(StatusEnum.SUCCESS, 'Get successfull', result);
     } catch (error) {
       throw new HttpException(
         {
@@ -71,15 +74,15 @@ export class OrderController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post("/massOrder")
-  async createMassOrder(@Req() req: CustomRequest, @Body("orders") orders: string) {
+  @Post('/massOrder')
+  async createMassOrder(
+    @Req() req: CustomRequest,
+    @Body('orders') orders: string,
+  ) {
     try {
       const user: UserValidate = req.user;
       await this.orderService.createMany(user.userId, orders);
-      return new CommonResponse(
-        StatusEnum.SUCCESS,
-        "Created successfull"
-      )
+      return new CommonResponse(StatusEnum.SUCCESS, 'Created successfull');
     } catch (error) {
       throw new HttpException(
         {

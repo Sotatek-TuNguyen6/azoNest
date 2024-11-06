@@ -6,7 +6,7 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule,{ cors: true });
+  const app = await NestFactory.create(AppModule, { cors: true });
   // app.useGlobalInterceptors(new LoggingInterceptor(new CustomLoggerService()));
   const configService = app.get(ConfigService);
   app.useGlobalPipes(new ValidationPipe());

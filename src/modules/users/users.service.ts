@@ -26,8 +26,8 @@ export class UsersService {
     private authService: AuthService,
     private historyService: HistoryService,
     private mailService: MailService,
-    private readonly historyLoginService: HistoryLoginService
-  ) { }
+    private readonly historyLoginService: HistoryLoginService,
+  ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     const { email, password } = createUserDto;
@@ -60,7 +60,10 @@ export class UsersService {
     return user;
   }
 
-  async update(id: Types.ObjectId, updateUserDto: UpdateUserDto): Promise<User> {
+  async update(
+    id: Types.ObjectId,
+    updateUserDto: UpdateUserDto,
+  ): Promise<User> {
     const user = await this.userModel.findById(id);
 
     if (!user) {
@@ -68,11 +71,16 @@ export class UsersService {
     }
 
     if (updateUserDto.password) {
-      const isMatch = await comparePassword(updateUserDto.password, user.password);
+      const isMatch = await comparePassword(
+        updateUserDto.password,
+        user.password,
+      );
       if (isMatch) {
-        throw new BadRequestException('New password cannot be the same as the old password');
+        throw new BadRequestException(
+          'New password cannot be the same as the old password',
+        );
       }
-      updateUserDto.password = await hashPassword(updateUserDto.password)
+      updateUserDto.password = await hashPassword(updateUserDto.password);
     }
 
     user.tokenVersion += 1;
@@ -92,7 +100,11 @@ export class UsersService {
     return deletedUser; // Trả về người dùng đã xóa
   }
 
-  async login(loginDto: LoginDto, ip: string, userAgent: string): Promise<LoginResponse> {
+  async login(
+    loginDto: LoginDto,
+    ip: string,
+    userAgent: string,
+  ): Promise<LoginResponse> {
     const { email, password } = loginDto;
     const user = await this.userModel.findOne({ email });
     if (!user) {
@@ -104,7 +116,12 @@ export class UsersService {
       throw new BadRequestException('Invalid password or email');
     }
 
-    await this.historyLoginService.createLoginHistory(user._id, ip, userAgent, true)
+    await this.historyLoginService.createLoginHistory(
+      user._id,
+      ip,
+      userAgent,
+      true,
+    );
 
     return this.authService.login(user);
   }
@@ -116,7 +133,8 @@ export class UsersService {
       throw new BadRequestException('Invalid password or email');
     }
 
-    if (user.role !== Role.admin) throw new ForbiddenException("User not admin")
+    if (user.role !== Role.admin)
+      throw new ForbiddenException('User not admin');
 
     const isPasswordValid = await comparePassword(password, user.password);
     if (!isPasswordValid) {
@@ -130,7 +148,7 @@ export class UsersService {
     userId: string | Types.ObjectId,
     amount: number,
     session?: any,
-    methodPay?: MethodPay
+    methodPay?: MethodPay,
   ): Promise<User> {
     const user = await this.userModel.findById(userId).session(session);
 
@@ -149,7 +167,7 @@ export class UsersService {
       moneyOld,
       `DEPOSIT`,
       TypeHistory.addMoney,
-      session
+      session,
     );
 
     return user;
@@ -188,7 +206,8 @@ export class UsersService {
       });
       return true;
     } catch (error) {
-      throw new Error("Error reset password")
+      console.log('🚀 ~ UsersService ~ forgotPassword ~ error:', error);
+      throw new Error('Error reset password');
     }
   }
 
@@ -203,7 +222,7 @@ export class UsersService {
         throw new BadRequestException('Invalid or expired token');
       }
 
-      const hashedPassword = await hashPassword(newPassword)
+      const hashedPassword = await hashPassword(newPassword);
 
       // Cập nhật mật khẩu mới và xóa token reset
       user.password = hashedPassword;
@@ -211,7 +230,6 @@ export class UsersService {
       user.resetPasswordExpires = undefined; // Xóa thời gian hết hạn token
 
       await user.save(); // Lưu thay đổi
-
     } catch (error) {
       console.error('Error in resetPassword:', error.message || error);
       throw new InternalServerErrorException('Failed to reset password');
@@ -226,7 +244,6 @@ export class UsersService {
     }
 
     return this.authService.logout(id);
-
   }
 
   async changeApiKey(id: Types.ObjectId) {
@@ -239,6 +256,6 @@ export class UsersService {
     user.apiKey = apiKey;
     await user.save();
 
-    return apiKey
+    return apiKey;
   }
 }

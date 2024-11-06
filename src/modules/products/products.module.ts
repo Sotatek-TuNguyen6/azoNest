@@ -14,7 +14,7 @@ import { UsersModule } from '../users/users.module';
     MongooseModule.forFeature([
       { name: Products.name, schema: ProductsSchema },
     ]),
-    forwardRef(() => UsersModule), 
+    forwardRef(() => UsersModule),
     CommonModule,
     LoggerModule,
     PlatformsModule,

@@ -20,8 +20,8 @@ export class History {
   @Prop()
   description: string;
 
-  @Prop({default: TypeHistory.order})
-  type: TypeHistory
+  @Prop({ default: TypeHistory.order })
+  type: TypeHistory;
 }
 
 export const HistorySchema = SchemaFactory.createForClass(History);

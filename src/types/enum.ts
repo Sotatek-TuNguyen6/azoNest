@@ -66,14 +66,14 @@ export enum MethodPay {
 }
 
 export enum TypeHistory {
-  addMoney = "addMoney",
-  order = "order"
+  addMoney = 'addMoney',
+  order = 'order',
 }
 
 export enum StatusInvoice {
-  processing = "processing",
-  completed = "completed",
-  cancelled = "cancelled"
+  processing = 'processing',
+  completed = 'completed',
+  cancelled = 'cancelled',
 }
 
 export enum PayPalEventType {
@@ -83,7 +83,7 @@ export enum PayPalEventType {
   PAYMENT_CAPTURE_DENIED = 'PAYMENT.CAPTURE.DENIED',
 }
 
-export enum ChannelInvoice{
-  BANKING = "banking",
-  FPAYMENT = "fpayment"
+export enum ChannelInvoice {
+  BANKING = 'banking',
+  FPAYMENT = 'fpayment',
 }

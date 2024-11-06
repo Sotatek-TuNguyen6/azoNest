@@ -1,4 +1,13 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { InvoiceService } from './invoice.service';
 import { StatusEnum } from 'src/types/enum';
 import { CustomRequest } from 'src/common/interfaces/custom-request.interface';
@@ -8,20 +17,16 @@ import { CreateInvoiceFpaymentDto } from './dto/create-invoice-fpayment';
 
 @Controller('invoice')
 export class InvoiceController {
-  constructor(private readonly invoiceService: InvoiceService) { }
+  constructor(private readonly invoiceService: InvoiceService) {}
 
   @UseGuards(JwtAuthGuard)
-  @Get("/history")
+  @Get('/history')
   async getHistory(@Req() req: CustomRequest) {
     try {
-      const user = req.user
-      const result = await this.invoiceService.getByUser(user.userId)
+      const user = req.user;
+      const result = await this.invoiceService.getByUser(user.userId);
 
-      return new CommonResponse(
-        StatusEnum.SUCCESS,
-        "Get successfull",
-        result
-      )
+      return new CommonResponse(StatusEnum.SUCCESS, 'Get successfull', result);
     } catch (error) {
       throw new HttpException(
         {
@@ -35,17 +40,19 @@ export class InvoiceController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post("/fpayment")
-  async createFpayment(@Req() req: CustomRequest, @Body() data: CreateInvoiceFpaymentDto) {
+  @Post('/fpayment')
+  async createFpayment(
+    @Req() req: CustomRequest,
+    @Body() data: CreateInvoiceFpaymentDto,
+  ) {
     try {
       const user = req.user;
-      const result = await this.invoiceService.createFpayment(data, user.userId)
+      const result = await this.invoiceService.createFpayment(
+        data,
+        user.userId,
+      );
 
-      return new CommonResponse(
-        StatusEnum.SUCCESS,
-        "Created success",
-        result
-      )
+      return new CommonResponse(StatusEnum.SUCCESS, 'Created success', result);
     } catch (error) {
       throw new HttpException(
         {

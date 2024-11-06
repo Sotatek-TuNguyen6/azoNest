@@ -7,13 +7,13 @@ import { UsersModule } from '../users/users.module';
 import { OrdersModule } from '../orders/orders.module';
 
 @Module({
-    imports: [
-        MongooseModule.forFeature([{ name: Refill.name, schema: RefillSchema }]),
-        UsersModule,
-        OrdersModule
-    ],
-    controllers: [RefillController],
-    providers: [RefillService],
-    exports: [MongooseModule, RefillService],
+  imports: [
+    MongooseModule.forFeature([{ name: Refill.name, schema: RefillSchema }]),
+    UsersModule,
+    OrdersModule,
+  ],
+  controllers: [RefillController],
+  providers: [RefillService],
+  exports: [MongooseModule, RefillService],
 })
-export class RefillModule { }
+export class RefillModule {}

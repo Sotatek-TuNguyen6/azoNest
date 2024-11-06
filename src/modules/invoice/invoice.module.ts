@@ -8,11 +8,14 @@ import { Deposit, DepositSchema } from '../deposit/schemas/deposit.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Invoice.name, schema: InvoiceSchema }, {name: Deposit.name, schema: DepositSchema}]),
+    MongooseModule.forFeature([
+      { name: Invoice.name, schema: InvoiceSchema },
+      { name: Deposit.name, schema: DepositSchema },
+    ]),
     forwardRef(() => UsersModule),
   ],
   controllers: [InvoiceController],
   providers: [InvoiceService],
   exports: [MongooseModule, InvoiceService],
 })
-export class InvoiceModule { }
+export class InvoiceModule {}

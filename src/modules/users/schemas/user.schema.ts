@@ -39,10 +39,10 @@ export class User {
   tokenVersion: number;
 
   @Prop()
-  resetPasswordToken: string
+  resetPasswordToken: string;
 
   @Prop()
-  resetPasswordExpires: Date
+  resetPasswordExpires: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

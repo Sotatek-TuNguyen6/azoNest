@@ -8,16 +8,16 @@ export class FpaymentCallBack {
   token: string;
 
   @IsNumber()
-  received: number; 
+  received: number;
 
   @IsString()
   status: string;
 
   @IsOptional()
   @IsString()
-  from_address?: string; 
-  
+  from_address?: string;
+
   @IsOptional()
   @IsString()
-  transaction_id?: string; 
+  transaction_id?: string;
 }

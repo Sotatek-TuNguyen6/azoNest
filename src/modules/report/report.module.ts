@@ -8,7 +8,7 @@ import { UsersModule } from '../users/users.module';
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Report.name, schema: ReportSchema }]),
-    forwardRef(() => UsersModule), 
+    forwardRef(() => UsersModule),
   ],
   controllers: [ReportController],
   providers: [ReportService],

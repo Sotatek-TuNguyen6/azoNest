@@ -14,7 +14,7 @@ import { CustomRequest } from 'src/common/interfaces/custom-request.interface';
 
 @Controller('history')
 export class HistoryController {
-  constructor(private readonly historyService: HistoryService) { }
+  constructor(private readonly historyService: HistoryService) {}
 
   @UseGuards(JwtAuthGuard)
   @Get()
@@ -42,7 +42,7 @@ export class HistoryController {
   @Get('user')
   async getByUser(@Req() req: CustomRequest) {
     try {
-      const user = req.user
+      const user = req.user;
       const historys = await this.historyService.getByUser(user.userId);
       return new CommonResponse(
         StatusEnum.SUCCESS,
@@ -65,8 +65,11 @@ export class HistoryController {
   @Get('pay')
   async getHistoryPayByUser(@Req() req: CustomRequest) {
     try {
-      const user = req.user
-      const historys = await this.historyService.getByUser(user.userId, TypeHistory.addMoney);
+      const user = req.user;
+      const historys = await this.historyService.getByUser(
+        user.userId,
+        TypeHistory.addMoney,
+      );
       return new CommonResponse(
         StatusEnum.SUCCESS,
         'Get list history success',

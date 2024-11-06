@@ -10,7 +10,6 @@ import { AuthGuard } from '@nestjs/passport';
 import { Reflector } from '@nestjs/core';
 import { Role } from 'src/types/enum';
 import Redis from 'ioredis';
-import { UsersService } from 'src/modules/users/users.service';
 import { CustomRequest } from 'src/common/interfaces/custom-request.interface';
 import { Model } from 'mongoose';
 import { User } from 'src/modules/users/schemas/user.schema';
@@ -37,7 +36,9 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
     const request: CustomRequest = context.switchToHttp().getRequest();
     const user = request.user;
-    const tokenVersionInUser = await this.userModel.findOne({ _id: user.userId });
+    const tokenVersionInUser = await this.userModel.findOne({
+      _id: user.userId,
+    });
     const ip = request.ip;
     const url = request.url;
 

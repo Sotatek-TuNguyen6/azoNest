@@ -8,7 +8,7 @@ import { MethodPay, TypeHistory } from 'src/types/enum';
 export class HistoryService {
   constructor(
     @InjectModel(History.name) private historyModel: Model<History>,
-  ) { }
+  ) {}
 
   /**
    * Create a new history record for a user transaction.
@@ -23,7 +23,7 @@ export class HistoryService {
    * const history = await this.historyService.createHistory('123456', MethodPay.CREDIT_CARD, 500, 'Payment for order #5678');
    * console.log(history);
    */
-  
+
   async createHistory(
     userId: string | Types.ObjectId,
     method: MethodPay,
@@ -31,7 +31,7 @@ export class HistoryService {
     amountOld: number,
     description: string,
     type?: TypeHistory,
-    session?: any 
+    session?: any,
   ): Promise<History> {
     const newHistory = new this.historyModel({
       user: userId,
@@ -39,7 +39,7 @@ export class HistoryService {
       amount,
       amountOld,
       description,
-      type
+      type,
     });
 
     if (session) {
@@ -62,10 +62,13 @@ export class HistoryService {
     return this.historyModel.find().exec();
   }
 
-  async getByUser(userId: Types.ObjectId, type?: TypeHistory): Promise<History[]> {
-    if(type){
-      return await this.historyModel.find({user: userId, type})
+  async getByUser(
+    userId: Types.ObjectId,
+    type?: TypeHistory,
+  ): Promise<History[]> {
+    if (type) {
+      return await this.historyModel.find({ user: userId, type });
     }
-    return await this.historyModel.find({ user: userId })
+    return await this.historyModel.find({ user: userId });
   }
 }

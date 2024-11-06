@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
-import { CounterDocument } from './counter.schema';  // Import schema Counter
+import { CounterDocument } from './counter.schema'; // Import schema Counter
 
 export type OrdersDocument = HydratedDocument<Orders>;
 
@@ -51,7 +51,7 @@ export class Orders {
   @Prop({ default: 0 })
   start_count: number;
 
-  @Prop({ unique: true })  // Đảm bảo giá trị orderCode là duy nhất
+  @Prop({ unique: true }) // Đảm bảo giá trị orderCode là duy nhất
   orderCode: number;
 }
 
@@ -62,12 +62,14 @@ OrdersSchema.pre('save', async function (next) {
   const order = this as OrdersDocument;
 
   if (order.isNew) {
-    const CounterModel = this.model('Counter');  // Model của schema Counter
-    const counter = await CounterModel.findOneAndUpdate(
+    const CounterModel = this.model('Counter'); // Model của schema Counter
+    const counter = (await CounterModel.findOneAndUpdate(
       { id: 'orderCode' },
       { $inc: { seq: 1 } },
-      { new: true, upsert: true }
-    ).lean().exec() as CounterDocument;
+      { new: true, upsert: true },
+    )
+      .lean()
+      .exec()) as CounterDocument;
 
     order.orderCode = counter.seq;
   }

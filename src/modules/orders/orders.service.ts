@@ -45,7 +45,7 @@ export interface ResponseOrderStatus {
 }
 
 export interface ResponseCreateOrder {
-  order: string
+  order: string;
 }
 
 @Injectable()
@@ -58,17 +58,21 @@ export class OrderService {
     private readonly platFromService: PlatformsService,
     private readonly productService: ProductService,
     private readonly historyService: HistoryService,
-  ) { }
+  ) {}
   private readonly logger = new Logger(OrderService.name);
 
-  async sendOrder(url: string, key: string, orderItem: OrderItem): Promise<ResponseCreateOrder> {
+  async sendOrder(
+    url: string,
+    key: string,
+    orderItem: OrderItem,
+  ): Promise<ResponseCreateOrder> {
     try {
       const payload: PayloadOrder = {
         action: Action.add,
         service: orderItem.service,
         link: orderItem.link,
         quantity: orderItem.quantity,
-        key
+        key,
       };
 
       const urlEncodedData = new URLSearchParams();
@@ -91,10 +95,10 @@ export class OrderService {
       }
 
       const responseData = response.data;
-      return responseData
+      return responseData;
     } catch (error) {
-      this.logger.error(error)
-      throw error
+      this.logger.error(error);
+      throw error;
     }
   }
 
@@ -154,7 +158,7 @@ export class OrderService {
           }
 
           if (Status[orderStatus.status] === Status.Canceled) {
-            const findUser = await this.refundUser(orderId, orderStatus.charge)
+            await this.refundUser(orderId, orderStatus.charge);
           }
 
           await this.ordersModel.findOneAndUpdate(
@@ -188,19 +192,19 @@ export class OrderService {
 
       if (!findOrder) {
         this.logger.error(`Order with ID ${orderId} not found.`);
-        throw new Error("Order not found")
+        throw new Error('Order not found');
       }
 
       const userId = findOrder.user;
-      const user = await this.userModel.findOne({ _id: userId })
-      if (!user) throw new Error("User not found");
+      const user = await this.userModel.findOne({ _id: userId });
+      if (!user) throw new Error('User not found');
       const moneyOld = user.money;
       const moneyRefund = findOrder.totalPrice - orderCharge;
 
       await this.userModel.findOneAndUpdate(
         { _id: userId },
         { $inc: { money: moneyRefund } }, // Cộng số tiền hoàn lại vào balance của người dùng
-        { new: true }
+        { new: true },
       );
 
       await this.historyService.createHistory(
@@ -211,10 +215,13 @@ export class OrderService {
         `Refund Order - ${orderId}`,
       );
 
-      this.logger.log(`Refunded ${moneyRefund} for user ID ${userId} related to order ID ${orderId}`);
-
+      this.logger.log(
+        `Refunded ${moneyRefund} for user ID ${userId} related to order ID ${orderId}`,
+      );
     } catch (error) {
-      this.logger.error(`Error refunding for order ID ${orderId}: ${error.message}`);
+      this.logger.error(
+        `Error refunding for order ID ${orderId}: ${error.message}`,
+      );
     }
   }
   async retryOrder(
@@ -376,7 +383,7 @@ export class OrderService {
 
       const product_value = orderItem.service;
       const product = await this.productService.getByValue(product_value);
-      if (!product) throw new BadRequestException("Product not found");
+      if (!product) throw new BadRequestException('Product not found');
       const platform = product.originPlatform;
 
       // Tính tổng số tiền đơn hàng
@@ -388,13 +395,13 @@ export class OrderService {
       }
 
       const findPlatform = await this.platFromService.getById(platform);
-      if (!findPlatform) throw new BadRequestException("Platform not found");
+      if (!findPlatform) throw new BadRequestException('Platform not found');
 
       const url = findPlatform.url;
 
-      const result = await this.sendOrder(url, findPlatform.apikey, orderItem)
+      const result = await this.sendOrder(url, findPlatform.apikey, orderItem);
       orderItem = { ...orderItem, order: result.order, name: product.label };
-      const moneyOld = user.money
+      const moneyOld = user.money;
       // Trừ số tiền từ tài khoản người dùng
       user.money -= totalAmount;
 
@@ -426,6 +433,7 @@ export class OrderService {
       session.endSession();
       return true;
     } catch (error) {
+      console.log('🚀 ~ OrderService ~ error:', error);
       // Abort transaction nếu có lỗi
       await session.abortTransaction();
       session.endSession();
@@ -439,9 +447,15 @@ export class OrderService {
    * @param {number} rate - The rate of the product
    * @returns {number} - The total amount
    */
-  private calculateTotal(orderItems: OrderItem[] | OrderItem, rate: number): number {
+  private calculateTotal(
+    orderItems: OrderItem[] | OrderItem,
+    rate: number,
+  ): number {
     if (Array.isArray(orderItems)) {
-      return orderItems.reduce((total, item) => total + item.quantity * rate, 0);
+      return orderItems.reduce(
+        (total, item) => total + item.quantity * rate,
+        0,
+      );
     } else {
       return orderItems.quantity * rate;
     }
@@ -474,6 +488,7 @@ export class OrderService {
         };
       });
     } catch (error) {
+      console.log('🚀 ~ OrderService ~ getOrders ~ error:', error);
       throw new InternalServerErrorException('Failed to get orders');
     }
   }
@@ -490,15 +505,17 @@ export class OrderService {
   async getAllOrderByUser(userId: Types.ObjectId) {
     const products = await this.productService.getAll();
 
-    const productDict = products.reduce((acc, product) => {
-      acc[product.value] = product;
-      return acc;
-    }, {} as Record<string, typeof products[0]>);
+    const productDict = products.reduce(
+      (acc, product) => {
+        acc[product.value] = product;
+        return acc;
+      },
+      {} as Record<string, (typeof products)[0]>,
+    );
 
     const orders = await this.ordersModel.find({ user: userId }).lean();
 
     type OrderItemWithProduct = OrderItem & { badges?: string[] };
-
 
     return orders.map((order) => {
       const updatedOrderItems: OrderItemWithProduct = {
@@ -514,7 +531,7 @@ export class OrderService {
   }
 
   async createMany(userId: Types.ObjectId, orders: string) {
-    if (!orders) throw new BadRequestException("Orders are required");
+    if (!orders) throw new BadRequestException('Orders are required');
 
     const session: ClientSession = await this.ordersModel.db.startSession();
     session.startTransaction();
@@ -522,36 +539,40 @@ export class OrderService {
     try {
       // Lấy thông tin người dùng
       const user = await this.userModel.findById(userId).session(session);
-      if (!user) throw new BadRequestException("User ID does not exist");
+      if (!user) throw new BadRequestException('User ID does not exist');
 
       // Lấy tất cả các sản phẩm
       const products = await this.productService.getAll();
 
       const allOrderItems: OrderItem[] = [];
       const totalAmounts: number[] = [];
-      const firstStep = orders.split("\n");
-      const arrayLink: string[] = []
-      const arrayKey: string[] = []
+      const firstStep = orders.split('\n');
+      const arrayLink: string[] = [];
+      const arrayKey: string[] = [];
 
       for (const item of firstStep) {
-        const parts = item.split("|").map((part) => part.trim());
+        const parts = item.split('|').map((part) => part.trim());
 
         if (parts.length < 3) {
-          throw new BadRequestException("Each order line must have at least service_id, link, and quantity");
+          throw new BadRequestException(
+            'Each order line must have at least service_id, link, and quantity',
+          );
         }
 
         const [serviceId, link, quantityStr] = parts;
         if (!/^\d+$/.test(quantityStr)) {
-          throw new BadRequestException("Quantity must be a valid number");
+          throw new BadRequestException('Quantity must be a valid number');
         }
         const quantity = parseInt(quantityStr, 10);
 
         // Tìm sản phẩm với serviceId tương ứng
         const product = products.find((prod) => prod.value === serviceId);
-        if (!product) throw new BadRequestException("Product not found");
+        if (!product) throw new BadRequestException('Product not found');
 
-        const platForm = await this.platFromService.getById(product.originPlatform);
-        if (!platForm) throw new BadRequestException("Platform not found");
+        const platForm = await this.platFromService.getById(
+          product.originPlatform,
+        );
+        if (!platForm) throw new BadRequestException('Platform not found');
 
         arrayLink.push(platForm.url);
         arrayKey.push(platForm.apikey);
@@ -571,16 +592,20 @@ export class OrderService {
       const totalAmount = totalAmounts.reduce((sum, amount) => sum + amount, 0);
 
       if (user.money < totalAmount) {
-        throw new BadRequestException("Insufficient balance");
+        throw new BadRequestException('Insufficient balance');
       }
-      const moneyOld = user.money
+      const moneyOld = user.money;
       user.money -= totalAmount;
       await user.save({ session });
       // Tạo và lưu tất cả các đơn hàng
       const orderPromises = [];
       for (const [index, orderItems] of allOrderItems.entries()) {
         // Gọi hàm sendOrder và chờ kết quả
-        const result = await this.sendOrder(arrayLink[index], arrayKey[index], orderItems);
+        const result = await this.sendOrder(
+          arrayLink[index],
+          arrayKey[index],
+          orderItems,
+        );
 
         // Cập nhật orderItems với thông tin mới
         const updatedOrderItems = { ...orderItems, order: result.order };
@@ -598,7 +623,7 @@ export class OrderService {
           user: userId,
           orderItems: updatedOrderItems,
           totalAmount: totalAmounts[index],
-          status: "Pending",
+          status: 'Pending',
         });
 
         // Lưu lời hứa (promise) vào  orderPromises
@@ -609,13 +634,13 @@ export class OrderService {
 
       await session.commitTransaction();
       session.endSession();
-      this.logger.debug("Multiple orders created successfully");
+      this.logger.debug('Multiple orders created successfully');
 
       return true;
     } catch (error) {
       await session.abortTransaction();
       session.endSession();
-      this.logger.error("Transaction failed:", error);
+      this.logger.error('Transaction failed:', error);
       throw error;
     }
   }

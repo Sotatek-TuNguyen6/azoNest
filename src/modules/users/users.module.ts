@@ -12,14 +12,16 @@ import { HistoryLoginModule } from '../historyLogin/history-login.module';
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
-    ThrottlerModule.forRoot([{
-      ttl: 60000,
-      limit: 10,
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 10,
+      },
+    ]),
     AuthModule,
     HistoryModule,
     MailModule,
-    HistoryLoginModule
+    HistoryLoginModule,
   ],
   controllers: [UsersController],
   providers: [UsersService],

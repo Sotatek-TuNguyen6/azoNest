@@ -51,7 +51,7 @@ export class Products {
   originPlatform: Types.ObjectId;
 
   @Prop()
-  badges: string[]
+  badges: string[];
 }
 
 export const ProductsSchema = SchemaFactory.createForClass(Products);
