@@ -58,7 +58,7 @@ export class OrderService {
     private readonly platFromService: PlatformsService,
     private readonly productService: ProductService,
     private readonly historyService: HistoryService,
-  ) {}
+  ) { }
   private readonly logger = new Logger(OrderService.name);
 
   async sendOrder(
@@ -306,7 +306,7 @@ export class OrderService {
     }
   }
 
-  async updateOrder(id: string, orderStatus: string, origin: OriginWeb) {
+  async updateOrder(id: string, orderStatus: string, origin?: OriginWeb) {
     try {
       if (!id) {
         throw new HttpException('Id is empty', HttpStatus.BAD_REQUEST);
@@ -389,6 +389,8 @@ export class OrderService {
       // Tính tổng số tiền đơn hàng
       const totalAmount = this.calculateTotal(orderItem, product.rate);
 
+      console.log("🚀 ~ OrderService ~ totalAmount:", totalAmount)
+
       // Kiểm tra số dư người dùng
       if (user.money < totalAmount) {
         throw new BadRequestException('Insufficient balance');
@@ -399,8 +401,8 @@ export class OrderService {
 
       const url = findPlatform.url;
 
-      const result = await this.sendOrder(url, findPlatform.apikey, orderItem);
-      orderItem = { ...orderItem, order: result.order, name: product.label };
+      // const result = await this.sendOrder(url, findPlatform.apikey, orderItem);
+      orderItem = { ...orderItem, order: '123', name: product.label };
       const moneyOld = user.money;
       // Trừ số tiền từ tài khoản người dùng
       user.money -= totalAmount;
@@ -414,16 +416,19 @@ export class OrderService {
         MethodPay.HANDLE,
         totalAmount,
         moneyOld,
-        `Add order - ${result.order}`,
+        // `Add order - ${result.order}`,
+        `Add order - 123`,
       );
+      console.log("🚀 ~ OrderService ~ totalAmount:", totalAmount)
 
       // Tạo đơn hàng mới
       const newOrder = new this.ordersModel({
         user: userId,
         orderItems: orderItem,
-        totalAmount,
+        totalPrice: totalAmount,
         origin: product.origin,
       });
+      console.log("🚀 ~ OrderService ~ newOrder:", newOrder)
 
       // Lưu đơn hàng vào cơ sở dữ liệu trong phiên giao dịch
       await newOrder.save({ session });

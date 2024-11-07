@@ -14,6 +14,8 @@ import {
   Ip,
   Headers,
   Logger,
+  Param,
+  Put,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create/create-user.dto';
@@ -26,11 +28,12 @@ import { Roles } from 'src/decorator/roles.decorator';
 import { SkipThrottle } from '@nestjs/throttler';
 import { CustomRequest } from 'src/common/interfaces/custom-request.interface';
 import { UserValidate } from 'src/guards/jwt.strategy';
+import { Types } from 'mongoose';
 
 @SkipThrottle()
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
   private readonly logger = new Logger();
   @Post()
   async create(@Body() createUserDto: CreateUserDto) {
@@ -125,8 +128,8 @@ export class UsersController {
     }
   }
 
-  // @UseGuards(JwtAuthGuard)
-  // @Roles(Role.admin)
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.admin)
   @Get()
   async findAll() {
     try {
@@ -331,6 +334,57 @@ export class UsersController {
           error: error.message,
         },
         statusCode,
+      );
+    }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.admin)
+  @Get('/detail/:id')
+  async findUserByAdmin(@Param('id') id: Types.ObjectId) {
+    try {
+      const result = await this.usersService.findOne(id);
+
+      return new CommonResponse(StatusEnum.SUCCESS, 'Get successful', result);
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw new HttpException(
+          {
+            status: StatusEnum.ERROR,
+            message: error.message,
+            error: error.message,
+          },
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      throw new HttpException(
+        {
+          status: StatusEnum.ERROR,
+          message: 'Failed add money to user',
+          error: error.message,
+        },
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.admin)
+  @Put('/:id')
+  async updateUser(@Param('id') id: Types.ObjectId, @Body() updateUserDto: UpdateUserDto,) {
+    try {
+
+      await this.usersService.update(id, updateUserDto);
+      return new CommonResponse(StatusEnum.SUCCESS, 'Update successs');
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: StatusEnum.ERROR,
+          message: error.message,
+          error: error.message,
+        },
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }

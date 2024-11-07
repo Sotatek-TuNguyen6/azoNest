@@ -16,23 +16,44 @@ import { DepositService } from './deposit.service';
 import { CreateDepositDto } from './dto/create-deposit.dto';
 import { UpdateDepositDto } from './dto/update-deposit.dto';
 import { CommonResponse } from 'src/common/dtos/common-response.dto';
-import { StatusEnum } from 'src/types/enum';
+import { Role, StatusEnum } from 'src/types/enum';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { CustomRequest } from 'src/common/interfaces/custom-request.interface';
 import { PayPalWebhookDto } from './dto/paypal-callback.dto';
+import { Roles } from 'src/decorator/roles.decorator';
+import { Types } from 'mongoose';
 
 @Controller('deposit')
 export class DepositController {
-  constructor(private readonly depositService: DepositService) {}
+  constructor(private readonly depositService: DepositService) { }
 
   @Post()
   create(@Body() createDepositDto: CreateDepositDto) {
     return this.depositService.create(createDepositDto);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.admin)
   @Get()
-  findAll() {
-    return this.depositService.findAll();
+  async findAll() {
+    try {
+      const result = await this.depositService.findAll();
+
+      return new CommonResponse(
+        StatusEnum.SUCCESS,
+        "Get successfull",
+        result
+      )
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: StatusEnum.ERROR,
+          message: error.message,
+          error: error.message,
+        },
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   // @Get(':id')
@@ -60,9 +81,27 @@ export class DepositController {
     }
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.admin)
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateDepositDto: UpdateDepositDto) {
-    return this.depositService.update(+id, updateDepositDto);
+  async update(@Param('id') id: Types.ObjectId, @Body() updateDepositDto: UpdateDepositDto) {
+    try {
+      const result = await this.depositService.update(id, updateDepositDto);
+
+      return new CommonResponse(
+        StatusEnum.SUCCESS,
+        "Update successfull",
+      )
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: StatusEnum.ERROR,
+          message: error.message,
+          error: error.message,
+        },
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   @Delete()
@@ -84,7 +123,7 @@ export class DepositController {
       throw new HttpException(
         {
           status: StatusEnum.ERROR,
-          message: 'Add funds failed',
+          message: error.message,
           error: error.message,
         },
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,

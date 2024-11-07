@@ -12,6 +12,7 @@ import { ConfigService } from '@nestjs/config';
 import { PayPalWebhookDto } from './dto/paypal-callback.dto';
 import { FpaymentCallBack } from './dto/fpayment-callback.dto';
 import { Invoice } from '../invoice/schemas/invoice.schema';
+import { UpdateDepositDto } from './dto/update-deposit.dto';
 
 @Injectable()
 export class DepositService {
@@ -92,9 +93,17 @@ export class DepositService {
     return data;
   }
 
-  // update(id: number, updateDepositDto: UpdateDepositDto) {
-  //   return `This action updates a #${id} deposit`;
-  // }
+  async update(id: Types.ObjectId, updateDepositDto: UpdateDepositDto): Promise<Deposit> {
+    const updatedDeposit = await this.depositModel
+      .findByIdAndUpdate(id, updateDepositDto, { new: true, runValidators: true })
+      .exec();
+      
+    if (!updatedDeposit) {
+      throw new BadRequestException(`Deposit with ID ${id} not found`);
+    }
+    
+    return updatedDeposit;
+  }
 
   remove(id: number) {
     return `This action removes a #${id} deposit`;

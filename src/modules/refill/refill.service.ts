@@ -55,7 +55,7 @@ export class RefillService {
   }
 
   // Update a refill record by ID
-  async updateRefill(id: string, data: Partial<Refill>): Promise<Refill> {
+  async updateRefill(id: Types.ObjectId, data: any): Promise<Refill> {
     return this.historyModel.findByIdAndUpdate(id, data, { new: true }).exec();
   }
 

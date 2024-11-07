@@ -5,7 +5,9 @@ import {
   Get,
   HttpException,
   HttpStatus,
+  Param,
   Post,
+  Put,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -15,11 +17,11 @@ import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { CustomRequest } from 'src/common/interfaces/custom-request.interface';
 import { UserValidate } from 'src/guards/jwt.strategy';
 import { CommonResponse } from 'src/common/dtos/common-response.dto';
-import { StatusEnum } from 'src/types/enum';
+import { OriginWeb, StatusEnum } from 'src/types/enum';
 
 @Controller('orders')
 export class OrderController {
-  constructor(private readonly orderService: OrderService) {}
+  constructor(private readonly orderService: OrderService) { }
 
   @UseGuards(JwtAuthGuard)
   @Post()
@@ -83,6 +85,28 @@ export class OrderController {
       const user: UserValidate = req.user;
       await this.orderService.createMany(user.userId, orders);
       return new CommonResponse(StatusEnum.SUCCESS, 'Created successfull');
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: StatusEnum.ERROR,
+          message: error.message,
+          error: error.message,
+        },
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Put("/:id")
+  async updateOrder(@Param('id') id: string, @Body('orderStatus') orderStatus: string) {
+    try {
+      const result = await this.orderService.updateOrder(id, orderStatus)
+
+      return new CommonResponse(
+        StatusEnum.SUCCESS,
+        "Update Successfull"
+      )
     } catch (error) {
       throw new HttpException(
         {
