@@ -1,4 +1,4 @@
-import { IsEnum, IsString } from 'class-validator';
+import { IsEnum, IsNumber, IsString } from 'class-validator';
 import { Types } from 'mongoose';
 import { OriginWeb } from 'src/types/enum';
 
@@ -8,4 +8,7 @@ export class ImportProductDto {
 
   @IsString()
   platform: Types.ObjectId;
+
+  @IsNumber()
+  percent: number
 }

@@ -368,15 +368,13 @@ export class OrderService {
     orderItem: OrderItem,
     userId: Types.ObjectId,
   ): Promise<boolean> {
-    const session: ClientSession = await this.ordersModel.db.startSession(); // Bắt đầu session transaction
+    const session: ClientSession = await this.ordersModel.db.startSession();
     session.startTransaction();
 
     try {
-      // Tìm người dùng theo ID trong phiên giao dịch (session)
       const user = await this.userModel.findById(userId).session(session);
       if (!user) throw new NotFoundException('User ID does not exist');
 
-      // Kiểm tra nếu danh sách sản phẩm trống
       if (!orderItem) {
         throw new NotFoundException('Order items cannot be empty');
       }
@@ -386,12 +384,8 @@ export class OrderService {
       if (!product) throw new BadRequestException('Product not found');
       const platform = product.originPlatform;
 
-      // Tính tổng số tiền đơn hàng
       const totalAmount = this.calculateTotal(orderItem, product.rate);
 
-      console.log("🚀 ~ OrderService ~ totalAmount:", totalAmount)
-
-      // Kiểm tra số dư người dùng
       if (user.money < totalAmount) {
         throw new BadRequestException('Insufficient balance');
       }
@@ -401,45 +395,36 @@ export class OrderService {
 
       const url = findPlatform.url;
 
-      // const result = await this.sendOrder(url, findPlatform.apikey, orderItem);
-      orderItem = { ...orderItem, order: '123', name: product.label };
+      const result = await this.sendOrder(url, findPlatform.apikey, orderItem);
+      orderItem = { ...orderItem, order: result.order, name: product.label };
       const moneyOld = user.money;
-      // Trừ số tiền từ tài khoản người dùng
       user.money -= totalAmount;
 
-      // Cập nhật số dư người dùng trong phiên giao dịch
       await user.save({ session });
 
-      // Lưu lịch sử giao dịch với lý do trừ tiền cho đơn hàng
       await this.historyService.createHistory(
         userId.toString(),
         MethodPay.HANDLE,
         totalAmount,
         moneyOld,
-        // `Add order - ${result.order}`,
-        `Add order - 123`,
+        `Add order - ${result.order}`,
+        // `Add order - 123`,
       );
-      console.log("🚀 ~ OrderService ~ totalAmount:", totalAmount)
 
-      // Tạo đơn hàng mới
       const newOrder = new this.ordersModel({
         user: userId,
         orderItems: orderItem,
         totalPrice: totalAmount,
         origin: product.origin,
       });
-      console.log("🚀 ~ OrderService ~ newOrder:", newOrder)
 
-      // Lưu đơn hàng vào cơ sở dữ liệu trong phiên giao dịch
       await newOrder.save({ session });
 
-      // Commit transaction nếu tất cả thành công
       await session.commitTransaction();
       session.endSession();
       return true;
     } catch (error) {
       console.log('🚀 ~ OrderService ~ error:', error);
-      // Abort transaction nếu có lỗi
       await session.abortTransaction();
       session.endSession();
       throw new InternalServerErrorException('Failed to create order');
@@ -454,15 +439,16 @@ export class OrderService {
    */
   private calculateTotal(
     orderItems: OrderItem[] | OrderItem,
-    rate: number,
+    rate: number, // Rate is per 1000 quantity
+    exchangeRate: number = 23000,
   ): number {
     if (Array.isArray(orderItems)) {
       return orderItems.reduce(
-        (total, item) => total + item.quantity * rate,
+        (total, item) => total + Number(item.quantity) * (rate / 1000) * exchangeRate,
         0,
       );
     } else {
-      return orderItems.quantity * rate;
+      return Number(orderItems.quantity) * (rate / 1000) * exchangeRate;
     }
   }
 
@@ -599,6 +585,7 @@ export class OrderService {
       if (user.money < totalAmount) {
         throw new BadRequestException('Insufficient balance');
       }
+
       const moneyOld = user.money;
       user.money -= totalAmount;
       await user.save({ session });

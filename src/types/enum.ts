@@ -8,6 +8,7 @@ export enum OriginWeb {
   AZO = 'azo',
   DG1 = '1dg',
   YTAPI = 'ytapi',
+  MVIEWS = 'mviews'
 }
 
 export enum Action {
