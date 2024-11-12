@@ -31,7 +31,7 @@ export class ProductService {
     private readonly configService: ConfigService,
     private readonly commonService: CommonService,
     private readonly platformService: PlatformsService,
-  ) {}
+  ) { }
   private readonly logger = new Logger(ProductService.name);
 
   async importData(
@@ -39,6 +39,10 @@ export class ProductService {
     platform: Types.ObjectId,
   ): Promise<Products[]> {
     try {
+      const redisKey = 'groupedProducts';
+
+      // Kiểm tra dữ liệu từ Redis
+      await this.redisClient.del(redisKey);
       this.logger.log(`Starting import for origin: ${origin}`);
 
       const findPlatform = await this.platformService.getById(platform);
@@ -82,8 +86,8 @@ export class ProductService {
         const filteredData: ResponeService[] =
           origin === OriginWeb.DG1
             ? response.data.filter(
-                (item: ResponeService) => item.platform === 'Youtube',
-              )
+              (item: ResponeService) => item.platform === 'Youtube',
+            )
             : response.data;
 
         const badges = [
@@ -98,6 +102,9 @@ export class ProductService {
           'Real',
           '30 days Refill',
         ];
+
+        console.log("---------------", OriginWeb.DG1 === origin)
+
 
         const createdProducts = await Promise.all(
           filteredData.map(async (item) => {
@@ -297,6 +304,10 @@ export class ProductService {
   }
 
   async removeAll() {
+    const redisKey = 'groupedProducts';
+
+    // Kiểm tra dữ liệu từ Redis
+    await this.redisClient.del(redisKey);
     return this.productsModel.deleteMany({});
   }
 
