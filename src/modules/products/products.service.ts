@@ -37,6 +37,7 @@ export class ProductService {
   async importData(
     origin: OriginWeb,
     platform: Types.ObjectId,
+    percent: number
   ): Promise<Products[]> {
     try {
       const redisKey = 'groupedProducts';
@@ -110,41 +111,47 @@ export class ProductService {
           filteredData.map(async (item) => {
             const randomBadgeCount = Math.floor(Math.random() * 9) + 1;
 
-            // Chọn ngẫu nhiên các badge từ mảng badges
             const randomBadges = [];
             for (let i = 0; i < randomBadgeCount; i++) {
               const badge = badges[Math.floor(Math.random() * badges.length)];
               if (!randomBadges.includes(badge)) {
-                // Đảm bảo không có badge trùng lặp
                 randomBadges.push(badge);
               }
             }
-
+            let category: string;
+            switch (origin) {
+              case OriginWeb.DG1:
+              case OriginWeb.MVIEWS:
+                category = item.category
+                break;
+              default:
+                category = 'Youtube | 4000H Watchtime';
+                break;
+            }
             const createdProduct = new this.productsModel({
               value: item.service,
               label: item.name,
               origin,
               min: item.min,
               max: item.max,
-              rate: item.rate,
+              rate: Number(percent) * Number(item.rate),
               refill: item.refill,
               originPlatform: platform,
               platform: 'Youtube',
-              category:
-                OriginWeb.DG1 === origin
-                  ? item.category
-                  : 'Youtube | 4000H Watchtime',
+              category,
               badges: randomBadges,
             });
 
-            // Lưu sản phẩm vào cơ sở dữ liệu
             await createdProduct.save();
 
-            return createdProduct; // Trả về sản phẩm đã tạo
+            return createdProduct;
           }),
         );
         this.logger.log('Update success!!');
-        return createdProducts; // Trả về danh sách sản phẩm đã tạo
+        return createdProducts;
+      }
+      else{
+        this.logger.debug("Error")
       }
     } catch (error) {
       this.logger.debug(error);
