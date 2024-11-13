@@ -21,7 +21,7 @@ export class InvoiceService {
     @InjectModel(Invoice.name) private invoiceModel: Model<Invoice>,
     @InjectModel(Deposit.name) private readonly depositModel: Model<Deposit>,
     private readonly userService: UsersService,
-  ) {}
+  ) { }
 
   async create(createInvoiceDto: CreateInvoiceDto, session?: any) {
     const { user_id } = createInvoiceDto;
@@ -73,8 +73,8 @@ export class InvoiceService {
     return `This action removes a #${id} invoice`;
   }
 
-  async findByStatus(userId: Types.ObjectId, status: StatusInvoice) {
-    return await this.invoiceModel.findOne({ user_id: userId, status });
+  async findByStatus(userId: Types.ObjectId, status: StatusInvoice, type: string) {
+    return await this.invoiceModel.findOne({ user_id: userId, status, type });
   }
 
   async getByUser(userId: Types.ObjectId) {

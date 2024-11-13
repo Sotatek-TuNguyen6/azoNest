@@ -22,7 +22,7 @@ export class DepositService {
     private readonly invoiceService: InvoiceService,
     private readonly userService: UsersService,
     private configService: ConfigService,
-  ) {}
+  ) { }
 
   async create(createDepositDto: CreateDepositDto): Promise<Deposit> {
     const createdDeposit = new this.depositModel(createDepositDto);
@@ -38,6 +38,7 @@ export class DepositService {
     let invoice = await this.invoiceService.findByStatus(
       userId,
       StatusInvoice.processing,
+      name
     );
     const user = await this.userService.findOne(userId);
 
@@ -80,6 +81,23 @@ export class DepositService {
       }
     }
 
+    if (name === 'momo') {
+  
+      const data: CreateInvoiceDto = {
+        code: invoice?.code,
+        type: name,
+        status: StatusInvoice.processing,
+        amount: 0,
+        user_id: userId,
+        currency: 'USD',
+        description: 'Recharge with MoMo',
+        request_id: invoice?.request_id ,
+      };
+      invoice = await this.invoiceService.create(data);
+      return {
+        code: invoice?.code,
+      };
+    }
     const result = await this.depositModel.findOne({ name }).select('-key');
 
     const payee_account =
