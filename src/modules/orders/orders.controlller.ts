@@ -17,11 +17,11 @@ import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { CustomRequest } from 'src/common/interfaces/custom-request.interface';
 import { UserValidate } from 'src/guards/jwt.strategy';
 import { CommonResponse } from 'src/common/dtos/common-response.dto';
-import { OriginWeb, StatusEnum } from 'src/types/enum';
+import { StatusEnum } from 'src/types/enum';
 
 @Controller('orders')
 export class OrderController {
-  constructor(private readonly orderService: OrderService) { }
+  constructor(private readonly orderService: OrderService) {}
 
   @UseGuards(JwtAuthGuard)
   @Post()
@@ -33,7 +33,7 @@ export class OrderController {
       const user: UserValidate = req.user;
 
       await this.orderService.createOrder(orderItemDto, user.userId);
-      return new CommonResponse(StatusEnum.SUCCESS, 'Created successfull');
+      return new CommonResponse(StatusEnum.SUCCESS, 'Created successful');
     } catch (error: any) {
       if (error instanceof BadRequestException) {
         throw new HttpException(
@@ -62,7 +62,7 @@ export class OrderController {
     try {
       const user: UserValidate = req.user;
       const result = await this.orderService.getAllOrderByUser(user.userId);
-      return new CommonResponse(StatusEnum.SUCCESS, 'Get successfull', result);
+      return new CommonResponse(StatusEnum.SUCCESS, 'Get successful', result);
     } catch (error) {
       throw new HttpException(
         {
@@ -84,7 +84,7 @@ export class OrderController {
     try {
       const user: UserValidate = req.user;
       await this.orderService.createMany(user.userId, orders);
-      return new CommonResponse(StatusEnum.SUCCESS, 'Created successfull');
+      return new CommonResponse(StatusEnum.SUCCESS, 'Created successful');
     } catch (error) {
       throw new HttpException(
         {
@@ -98,15 +98,15 @@ export class OrderController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Put("/:id")
-  async updateOrder(@Param('id') id: string, @Body('orderStatus') orderStatus: string) {
+  @Put('/:id')
+  async updateOrder(
+    @Param('id') id: string,
+    @Body('orderStatus') orderStatus: string,
+  ) {
     try {
-      const result = await this.orderService.updateOrder(id, orderStatus)
+      await this.orderService.updateOrder(id, orderStatus);
 
-      return new CommonResponse(
-        StatusEnum.SUCCESS,
-        "Update Successfull"
-      )
+      return new CommonResponse(StatusEnum.SUCCESS, 'Update successful');
     } catch (error) {
       throw new HttpException(
         {

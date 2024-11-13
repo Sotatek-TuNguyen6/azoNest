@@ -31,13 +31,13 @@ export class ProductService {
     private readonly configService: ConfigService,
     private readonly commonService: CommonService,
     private readonly platformService: PlatformsService,
-  ) { }
+  ) {}
   private readonly logger = new Logger(ProductService.name);
 
   async importData(
     origin: OriginWeb,
     platform: Types.ObjectId,
-    percent: number
+    percent: number,
   ): Promise<Products[]> {
     try {
       const redisKey = 'groupedProducts';
@@ -87,8 +87,8 @@ export class ProductService {
         const filteredData: ResponeService[] =
           origin === OriginWeb.DG1
             ? response.data.filter(
-              (item: ResponeService) => item.platform === 'Youtube',
-            )
+                (item: ResponeService) => item.platform === 'Youtube',
+              )
             : response.data;
 
         const badges = [
@@ -122,7 +122,7 @@ export class ProductService {
             switch (origin) {
               case OriginWeb.DG1:
               case OriginWeb.MVIEWS:
-                category = item.category
+                category = item.category;
                 break;
               default:
                 category = 'Youtube | 4000H Watchtime';
@@ -149,9 +149,8 @@ export class ProductService {
         );
         this.logger.log('Update success!!');
         return createdProducts;
-      }
-      else{
-        this.logger.debug("Error")
+      } else {
+        this.logger.debug('Error');
       }
     } catch (error) {
       this.logger.debug(error);

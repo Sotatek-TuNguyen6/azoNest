@@ -38,7 +38,7 @@ export class ProductController {
       const importedProducts = await this.productService.importData(
         importProductDto.origin,
         platform._id,
-        importProductDto.percent
+        importProductDto.percent,
       );
       return new CommonResponse(
         StatusEnum.SUCCESS,
