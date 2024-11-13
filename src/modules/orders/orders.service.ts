@@ -58,7 +58,7 @@ export class OrderService {
     private readonly platFromService: PlatformsService,
     private readonly productService: ProductService,
     private readonly historyService: HistoryService,
-  ) { }
+  ) {}
   private readonly logger = new Logger(OrderService.name);
 
   async sendOrder(
@@ -444,7 +444,8 @@ export class OrderService {
   ): number {
     if (Array.isArray(orderItems)) {
       return orderItems.reduce(
-        (total, item) => total + Number(item.quantity) * (rate / 1000) * exchangeRate,
+        (total, item) =>
+          total + Number(item.quantity) * (rate / 1000) * exchangeRate,
         0,
       );
     } else {

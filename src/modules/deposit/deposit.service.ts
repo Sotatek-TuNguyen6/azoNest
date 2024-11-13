@@ -57,6 +57,24 @@ export class DepositService {
           invoice = await this.invoiceService.create(data);
           break;
         }
+        case 'momo': {
+          const code = `MM-${generateSecureRandomString(7)}`;
+          const request_id = generateSecureRandomString(10);
+          const data: CreateInvoiceDto = {
+            code: code,
+            type: name,
+            status: StatusInvoice.processing,
+            amount: 0,
+            user_id: userId,
+            currency: 'USD',
+            description: 'Recharge with MoMo',
+            request_id: request_id,
+          };
+          invoice = await this.invoiceService.create(data);
+          return {
+            code: code,
+          };
+        }
         default:
           throw new BadRequestException('Method not found');
       }
@@ -93,15 +111,21 @@ export class DepositService {
     return data;
   }
 
-  async update(id: Types.ObjectId, updateDepositDto: UpdateDepositDto): Promise<Deposit> {
+  async update(
+    id: Types.ObjectId,
+    updateDepositDto: UpdateDepositDto,
+  ): Promise<Deposit> {
     const updatedDeposit = await this.depositModel
-      .findByIdAndUpdate(id, updateDepositDto, { new: true, runValidators: true })
+      .findByIdAndUpdate(id, updateDepositDto, {
+        new: true,
+        runValidators: true,
+      })
       .exec();
-      
+
     if (!updatedDeposit) {
       throw new BadRequestException(`Deposit with ID ${id} not found`);
     }
-    
+
     return updatedDeposit;
   }
 

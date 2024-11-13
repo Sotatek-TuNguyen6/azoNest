@@ -25,7 +25,7 @@ import { Types } from 'mongoose';
 
 @Controller('deposit')
 export class DepositController {
-  constructor(private readonly depositService: DepositService) { }
+  constructor(private readonly depositService: DepositService) {}
 
   @Post()
   create(@Body() createDepositDto: CreateDepositDto) {
@@ -39,11 +39,7 @@ export class DepositController {
     try {
       const result = await this.depositService.findAll();
 
-      return new CommonResponse(
-        StatusEnum.SUCCESS,
-        "Get successfull",
-        result
-      )
+      return new CommonResponse(StatusEnum.SUCCESS, 'Get successful', result);
     } catch (error) {
       throw new HttpException(
         {
@@ -68,7 +64,7 @@ export class DepositController {
       const user = req.user;
       const result = await this.depositService.findOne(name, user.userId);
 
-      return new CommonResponse(StatusEnum.SUCCESS, 'Get successfull', result);
+      return new CommonResponse(StatusEnum.SUCCESS, 'Get successful', result);
     } catch (error) {
       throw new HttpException(
         {
@@ -84,14 +80,14 @@ export class DepositController {
   @UseGuards(JwtAuthGuard)
   @Roles(Role.admin)
   @Patch(':id')
-  async update(@Param('id') id: Types.ObjectId, @Body() updateDepositDto: UpdateDepositDto) {
+  async update(
+    @Param('id') id: Types.ObjectId,
+    @Body() updateDepositDto: UpdateDepositDto,
+  ) {
     try {
-      const result = await this.depositService.update(id, updateDepositDto);
+      await this.depositService.update(id, updateDepositDto);
 
-      return new CommonResponse(
-        StatusEnum.SUCCESS,
-        "Update successfull",
-      )
+      return new CommonResponse(StatusEnum.SUCCESS, 'Update successful');
     } catch (error) {
       throw new HttpException(
         {

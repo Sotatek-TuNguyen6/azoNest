@@ -18,7 +18,7 @@ import { Roles } from 'src/decorator/roles.decorator';
 
 @Controller('invoice')
 export class InvoiceController {
-  constructor(private readonly invoiceService: InvoiceService) { }
+  constructor(private readonly invoiceService: InvoiceService) {}
 
   @UseGuards(JwtAuthGuard)
   @Get('/history')
@@ -71,7 +71,7 @@ export class InvoiceController {
   @Get()
   async getAll() {
     try {
-      const result = await this.invoiceService.getAll()
+      const result = await this.invoiceService.getAll();
 
       return new CommonResponse(StatusEnum.SUCCESS, 'Get successfull', result);
     } catch (error) {

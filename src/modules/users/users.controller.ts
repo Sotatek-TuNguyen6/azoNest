@@ -33,7 +33,7 @@ import { Types } from 'mongoose';
 @SkipThrottle()
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
   private readonly logger = new Logger();
   @Post()
   async create(@Body() createUserDto: CreateUserDto) {
@@ -368,13 +368,14 @@ export class UsersController {
     }
   }
 
-
   @UseGuards(JwtAuthGuard)
   @Roles(Role.admin)
   @Put('/:id')
-  async updateUser(@Param('id') id: Types.ObjectId, @Body() updateUserDto: UpdateUserDto,) {
+  async updateUser(
+    @Param('id') id: Types.ObjectId,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
     try {
-
       await this.usersService.update(id, updateUserDto);
       return new CommonResponse(StatusEnum.SUCCESS, 'Update successs');
     } catch (error) {

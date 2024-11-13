@@ -10,5 +10,5 @@ export class ImportProductDto {
   platform: Types.ObjectId;
 
   @IsNumber()
-  percent: number
+  percent: number;
 }

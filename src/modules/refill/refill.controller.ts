@@ -21,7 +21,7 @@ import { Types } from 'mongoose';
 
 @Controller('refill')
 export class RefillController {
-  constructor(private readonly refillService: RefillService) { }
+  constructor(private readonly refillService: RefillService) {}
 
   @UseGuards(JwtAuthGuard)
   @Post()
@@ -87,8 +87,8 @@ export class RefillController {
 
   @UseGuards(JwtAuthGuard)
   @Roles(Role.admin)
-  @Patch("/:id")
-  async update(@Param("id") id: Types.ObjectId, @Body() data: any) {
+  @Patch('/:id')
+  async update(@Param('id') id: Types.ObjectId, @Body() data: any) {
     try {
       await this.refillService.updateRefill(id, data);
       return new CommonResponse(StatusEnum.SUCCESS, 'Update successfull');

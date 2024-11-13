@@ -81,8 +81,8 @@ export class InvoiceService {
     return await this.invoiceModel.find({ user_id: userId });
   }
 
-  async getAll(){
-    return await this.invoiceModel.find()
+  async getAll() {
+    return await this.invoiceModel.find();
   }
 
   async createFpayment(data: CreateInvoiceFpaymentDto, userId: Types.ObjectId) {
