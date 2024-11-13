@@ -25,7 +25,7 @@ import { Types } from 'mongoose';
 
 @Controller('deposit')
 export class DepositController {
-  constructor(private readonly depositService: DepositService) {}
+  constructor(private readonly depositService: DepositService) { }
 
   @Post()
   create(@Body() createDepositDto: CreateDepositDto) {
@@ -124,6 +124,17 @@ export class DepositController {
         },
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
+    }
+  }
+
+  @Post('/callbackMoMo')
+  @HttpCode(HttpStatus.OK)
+  async callBackMoMo(@Body() data: any) {
+    try {
+      await this.depositService.callBackMoMo(data)
+      return true;
+    } catch (error) {
+      console.log("🚀 ~ DepositController ~ callBackMomo ~ error:", error)
     }
   }
 }

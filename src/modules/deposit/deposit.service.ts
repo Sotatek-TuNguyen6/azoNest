@@ -82,7 +82,7 @@ export class DepositService {
     }
 
     if (name === 'momo') {
-  
+
       const data: CreateInvoiceDto = {
         code: invoice?.code,
         type: name,
@@ -91,7 +91,7 @@ export class DepositService {
         user_id: userId,
         currency: 'USD',
         description: 'Recharge with MoMo',
-        request_id: invoice?.request_id ,
+        request_id: invoice?.request_id,
       };
       invoice = await this.invoiceService.create(data);
       return {
@@ -247,6 +247,9 @@ export class DepositService {
     }
   }
 
+  async callBackMoMo(data: any) {
+    console.log("🚀 ~ DepositService ~ callBackMoMo ~ data:", data)
+  }
   async findByName(name: string): Promise<Deposit> {
     return await this.depositModel.findOne({ name });
   }
